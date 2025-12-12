@@ -1,0 +1,10 @@
+{
+  "eslint.useFlatConfig": true,
+  "editor.formatOnSave": true,
+  "eslint.validate": [
+    "javascript",
+    "typescript",
+    "typescriptreact",
+    "json"
+  ]
+}

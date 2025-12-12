@@ -1,0 +1,13 @@
+{
+  "role": "Role",
+  "name": "Name",
+  "email": "Email",
+  "member": "Member",
+  "country": "Country",
+  "pending": "Pending",
+  "lastName": "Last Name",
+  "firstName": "First Name",
+  "institution": "Institution",
+  "sub_instructor": "Co-instructor",
+  "main_instructor": "Main instructor"
+}

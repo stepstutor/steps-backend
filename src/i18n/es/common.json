@@ -1,0 +1,13 @@
+{
+    "role": "Rol",
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "member": "Miembro",
+    "pending": "Pendiente",
+    "country": "País",
+    "lastName": "Apellido",
+    "firstName": "Nombre",
+    "institution": "Institución",
+    "sub_instructor": "Co-instructor",
+    "main_instructor": "Instructor principal"
+}
