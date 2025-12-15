@@ -1,7 +1,5 @@
 import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { CoursesModule } from './modules/courses/courses.module';
 import { CommonModule } from '@common/common.module';
 import { AuthModule } from '@modules/auth/auth.module';
@@ -21,9 +19,7 @@ import { ResponseInterceptor } from '@common/interceptors';
     InstitutionsModule,
     NotificationsModule,
   ],
-  controllers: [AppController],
   providers: [
-    AppService,
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor,
