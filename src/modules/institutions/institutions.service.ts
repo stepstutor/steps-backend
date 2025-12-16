@@ -64,6 +64,14 @@ export class InstitutionsService {
     }
     const [institutions, count] =
       await this.institutionsRepository.findAndCount(options);
+    if (count === 0) {
+      return createPaginatedResponse<InstitutionWithCounts>(
+        [],
+        paginationDto?.page || 1,
+        count,
+        paginationDto?.limit,
+      );
+    }
     const [institutionUsersCounts, institutionCoursesCounts] =
       await Promise.all([
         this.usersService.countUsersOfInstitutions(
