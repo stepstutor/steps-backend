@@ -28,7 +28,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<
 
     return next.handle().pipe(
       map((data) => {
-        const { paginationMeta, data: responseData } = data;
+        const { paginationMeta, data: responseData } = data ?? {};
 
         const result: ApiResponse<T> & {
           paginationMeta?: PaginatedResponse<T>['paginationMeta'];
