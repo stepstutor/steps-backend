@@ -30,7 +30,7 @@ export class CoursesController {
   async getAll(@Request() req) {
     const { id: authenticatedUserId, role, institutionId } = req.user;
 
-    this.courseManagerService.getCourses(
+    return this.courseManagerService.getCourses(
       authenticatedUserId,
       role,
       institutionId,
@@ -44,7 +44,7 @@ export class CoursesController {
   @ApiBearerAuth('access-token')
   async get(@Param('id') id: string, @Request() req) {
     const { id: authenticatedUserId, role, institutionId } = req.user;
-    this.courseManagerService.getById(
+    return this.courseManagerService.getById(
       id,
       authenticatedUserId,
       role,
@@ -68,7 +68,7 @@ export class CoursesController {
       lastName,
     } = req.user;
 
-    this.courseManagerService.create(
+    return this.courseManagerService.create(
       createCourseDtoBody,
       authenticatedUserId,
       role,
