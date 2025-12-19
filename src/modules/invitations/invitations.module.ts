@@ -1,11 +1,16 @@
+// **** Library Imports ****
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SupabaseModule } from 'nestjs-supabase-js';
-import { InvitationsService } from './invitations.service';
+
+// **** External Imports ****
+import { CommonModule } from '@common/common.module';
+
+// **** Internal Imports ****
 import { UsersModule } from '../user/users.module';
-import { InvitationsController } from './controllers/invitations.controller';
 import { Invitation } from './entities/invitation.entity';
-import { CommonModule } from 'src/common/common.module';
+import { InvitationsService } from './invitations.service';
+import { InvitationsController } from './controllers/invitations.controller';
 
 @Module({
   imports: [

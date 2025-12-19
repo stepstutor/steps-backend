@@ -19,7 +19,7 @@ import { Institution } from '@modules/institutions/entities/institutions.entity'
 import { UserWithInvitationLink } from '@modules/user/types/userWithInvitationLink';
 
 import { Course } from '../entities/course.entity';
-import { StudentDto } from '../dto/createCourseDto';
+import { StudentDto } from '../dto/createCourse.dto';
 import { CourseStudent } from '../entities/course-student.entity';
 import { CourseInstructor } from '../entities/course-instructor.entity';
 
@@ -39,8 +39,26 @@ export class CoursesService {
     private readonly institutionService: InstitutionsService,
   ) {}
 
-  async findAll(where?: FindOptionsWhere<Course>): Promise<Course[]> {
-    return this.courseRepository.find(where && { where });
+  async findAll(
+    where?: FindOptionsWhere<Course>,
+    page?: number,
+    limit?: number,
+    sortBy?: string,
+    sortOrder?: 'ASC' | 'DESC',
+  ): Promise<Course[]> {
+    const query = this.courseRepository.createQueryBuilder('course');
+    if (where) {
+      query.where;
+    }
+    if (sortBy) {
+      query.orderBy(`course.${sortBy}`, sortOrder || 'ASC');
+    } else {
+      query.orderBy('course.createdAt', 'DESC');
+    }
+    if (page && limit) {
+      query.skip((page - 1) * limit).take(limit);
+    }
+    return query.getMany();
   }
 
   async findOne(where: FindOptionsWhere<Course>): Promise<Course | null> {

@@ -1,8 +1,6 @@
 import {
-  Get,
   Body,
   Post,
-  Query,
   Logger,
   Request,
   UseGuards,
@@ -32,19 +30,6 @@ export class InvitationsController {
     private readonly supabaseClient: SupabaseClient,
     private readonly emailService: EmailService,
   ) {}
-
-  @Get()
-  @ApiOperation({ summary: 'Get list of invitations' })
-  @Roles([Role.INSTITUTE_ADMIN, Role.SUPER_ADMIN])
-  @UseGuards(SupabaseAuthGuard, RolesGuard)
-  @ApiBearerAuth('access-token')
-  get(@Request() req, @Query('role') role: Role) {
-    const { institutionId } = req.user;
-    return this.invitationsService.findAll({
-      ...{ role },
-      institutionId,
-    });
-  }
 
   @Post()
   @ApiOperation({ summary: 'Add an invitation' })

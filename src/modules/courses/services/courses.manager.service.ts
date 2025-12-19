@@ -1,18 +1,24 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Course } from '../entities/course.entity';
-import { Role } from '@common/enums/userRole';
-import { FindOptionsWhere } from 'typeorm';
-import { CoursesService } from './courses.service';
-import { I18nService } from 'nestjs-i18n';
-import { ConfigService } from '@nestjs/config';
-import { EmailService } from '@common/services/email.service';
-import { UserNotification } from '@modules/notifications/entities/userNotification.entity';
-import { InjectQueue } from '@nestjs/bullmq';
-import { NOTIFICATION_QUEUE_NAME } from '@common/constants';
-import { Queue } from 'bullmq';
-import { NotificationJob } from '@modules/notifications/entities/notification.entity';
-import { CreateCourseDto } from '../dto/createCourseDto';
+// **** Library Imports ****
 import { UUID } from 'crypto';
+import { Queue } from 'bullmq';
+import { I18nService } from 'nestjs-i18n';
+import { FindOptionsWhere } from 'typeorm';
+import { InjectQueue } from '@nestjs/bullmq';
+import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+
+// **** External Imports ****
+import { Role } from '@common/enums/userRole';
+import { NOTIFICATION_QUEUE_NAME } from '@common/constants';
+import { EmailService } from '@common/services/email.service';
+import { NotificationJob } from '@modules/notifications/entities/notification.entity';
+import { UserNotification } from '@modules/notifications/entities/userNotification.entity';
+
+// **** Internal Imports ****
+import { Course } from '../entities/course.entity';
+import { CoursesService } from './courses.service';
+import { CreateCourseDto } from '../dto/createCourse.dto';
+import { GetCoursesQueryDto } from '../dto/getCoursesQuery.dto';
 
 @Injectable()
 export class CoursesManagerService {
@@ -34,10 +40,12 @@ export class CoursesManagerService {
     authenticatedUserId: string,
     role: Role,
     institutionId: string,
+    getCoursesQuery: GetCoursesQueryDto,
   ) {
     let where: FindOptionsWhere<Course> = {
       institutionId,
     };
+    const { page, limit, sortBy, sortOrder } = getCoursesQuery;
     if (role === Role.INSTRUCTOR) {
       where = {
         ...where,
@@ -54,7 +62,13 @@ export class CoursesManagerService {
         },
       };
     }
-    const courses = await this.coursesService.findAll(where);
+    const courses = await this.coursesService.findAll(
+      where,
+      page,
+      limit,
+      sortBy,
+      sortOrder,
+    );
     // const coursesInstructors = await Promise.all(courses.map(course => course.courseInstructors));
     // const coursesStudents = await Promise.all(courses.map(course => course.courseStudents));
     const [coursesInstructors, coursesStudents] = await Promise.all([

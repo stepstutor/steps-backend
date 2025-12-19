@@ -1,3 +1,4 @@
+// **** Library Imports ****
 import {
   Get,
   Put,
@@ -17,12 +18,14 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 
+// **** External Imports ****
 import { Role } from '@common/enums/userRole';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
 import { InActiveUserGuard } from '@common/guards/inActiveUser.guard';
 import { SupabaseAuthGuard } from '@common/guards/supabase-auth.guard';
 
+// **** Internal Imports ****
 import { InstitutionsService } from '../institutions.service';
 import { CreateInstitutionDto } from '../dtos/createInstitutionDto';
 import { UpdateInstitutionDto } from '../dtos/updateInstitutionDto';

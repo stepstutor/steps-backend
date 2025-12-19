@@ -20,6 +20,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 
 // **** External Imports ****
 import { Role } from '@common/enums/userRole';
+import { PaginationDTO } from '@common/dto/pagination.dto';
 import { EmailService } from '@common/services/email.service';
 import { UploadService } from '@common/services/upload.service';
 import { CoursesService } from '@modules/courses/services/courses.service';
@@ -68,7 +69,11 @@ export class UsersService {
   }
 
   findAllCustom(
-    params: QueryParamsUsersDto & { institutionId },
+    params: Omit<QueryParamsUsersDto, keyof PaginationDTO> & { institutionId },
+    page?: number,
+    limit?: number,
+    sortBy?: string,
+    sortOrder?: 'ASC' | 'DESC',
   ): Promise<User[]> {
     const query = this.usersRepository.createQueryBuilder('user');
     if (params.role && params.role.length) {
@@ -113,6 +118,12 @@ export class UsersService {
           );
         }),
       );
+    }
+    if (sortBy) {
+      query.orderBy(`user.${sortBy}`, sortOrder || 'ASC');
+    }
+    if (page && limit) {
+      query.skip((page - 1) * limit).take(limit);
     }
 
     return query.getMany();

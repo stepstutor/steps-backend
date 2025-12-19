@@ -4,6 +4,7 @@ import {
   Body,
   Patch,
   Param,
+  Query,
   Delete,
   Request,
   UsePipes,
@@ -24,6 +25,7 @@ import { CreateNotificationDto } from '../dto/create-notification.dto';
 import { UpdateNotificationDto } from '../dto/update-notification.dto';
 import { NotificationJobsService } from '../services/notificationJobs.service';
 import { UserNotificationsService } from '../services/userNotifications.service';
+import { PaginationDTO } from '@common/dto/pagination.dto';
 
 @ApiTags('Notifications')
 @Controller('notifications')
@@ -47,12 +49,25 @@ export class NotificationsController {
   @Roles([Role.SUPER_ADMIN, Role.INSTRUCTOR, Role.STUDENT])
   @UseGuards(SupabaseAuthGuard, InActiveUserGuard, RolesGuard)
   @ApiBearerAuth('access-token')
-  findAll(@Request() req) {
+  findAll(@Request() req, @Query() query: PaginationDTO) {
     const { role, id } = req.user;
+    const { page, limit, sortBy, sortOrder } = query;
     if (role === Role.SUPER_ADMIN) {
-      return this.notificationsService.findAll();
+      return this.notificationsService.findAll(
+        undefined,
+        page,
+        limit,
+        sortBy,
+        sortOrder,
+      );
     }
-    return this.userNotificationsService.findAll({ userId: id });
+    return this.userNotificationsService.findAll(
+      { userId: id },
+      page,
+      limit,
+      sortBy,
+      sortOrder,
+    );
   }
 
   @Get(':id')

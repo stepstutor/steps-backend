@@ -13,8 +13,6 @@ import {
   Controller,
   UploadedFile,
   UseInterceptors,
-  NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -24,16 +22,15 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { In } from 'typeorm';
+import * as crypto from 'crypto';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 // **** External Imports ****
 import { Role } from '@common/enums/userRole';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
-import { EmailService } from '@common/services/email.service';
 import { InActiveUserGuard } from '@common/guards/inActiveUser.guard';
 import { SupabaseAuthGuard } from '@common/guards/supabase-auth.guard';
-import { InstitutionsService } from '@modules/institutions/institutions.service';
 
 // **** Internal Imports ****
 import { UsersService } from '../services/users.service';
@@ -41,14 +38,14 @@ import { UpdateUserDto } from '../dtos/updateUserDto';
 import { CreateUserDto } from '../dtos/createUserDto';
 import { ArchiveUsersDto } from '../dtos/archiveUsersDto';
 import { QueryParamsUsersDto } from '../dtos/queryParamsUsersDto';
+import { UsersManagerService } from '../services/users.manager.service';
 
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
-    private readonly emailService: EmailService,
-    private readonly institutionService: InstitutionsService,
+    private readonly usersManagerService: UsersManagerService,
   ) {}
 
   @Get()
@@ -58,7 +55,7 @@ export class UsersController {
   @ApiBearerAuth('access-token')
   get(@Request() req, @Query() params: QueryParamsUsersDto) {
     const { institutionId } = req.user;
-    return this.usersService.findAllCustom({ ...params, institutionId });
+    return this.usersManagerService.getUsers(institutionId, params);
   }
 
   @Get('/usage')
@@ -68,7 +65,7 @@ export class UsersController {
   @ApiBearerAuth('access-token')
   async getUsersUsage(@Request() req) {
     const { institutionId } = req.user;
-    return this.usersService.getUsersUsage(institutionId);
+    return this.usersManagerService.getUsersUsage(institutionId);
   }
 
   @Post()
@@ -83,43 +80,11 @@ export class UsersController {
     @Body() usersBody: CreateUserDto[],
   ) {
     const { id: authenticatedUserId, institutionId } = req.user;
-    const role = usersBody[0].role;
-    const institution = await this.institutionService.findOne({
-      id: institutionId,
-    });
-    const usage = await this.usersService.getUsersUsage(institutionId);
-    const limit =
-      (role === Role.INSTRUCTOR
-        ? usage.instructors.limit
-        : usage.students.limit) || 0;
-    const consumedCount =
-      role === Role.INSTRUCTOR
-        ? usage.instructors.consumed
-        : usage.students.consumed;
-
-    if (consumedCount + usersBody.length > limit) {
-      throw new BadRequestException('You have reached the limit of accounts');
-    }
-    const users = await this.usersService.addBulk(
-      usersBody.map((user) => ({
-        ...user,
-        isActive: false,
-        createdBy: authenticatedUserId,
-        updatedBy: authenticatedUserId,
-        institutionId: institutionId,
-      })),
+    return this.usersManagerService.createUsers(
+      authenticatedUserId,
+      institutionId,
+      usersBody,
     );
-
-    res.status(201).json(users);
-    for (const user of users) {
-      await this.emailService.sendInvitationEmail(
-        `${user.firstName} ${user.lastName}`,
-        user.email,
-        user.invitationLink!,
-        institution?.language,
-      );
-      await new Promise((resolve) => setTimeout(resolve, 1500)); // 2 second delay
-    }
   }
 
   @Put('/profile')
@@ -177,48 +142,13 @@ export class UsersController {
   @Roles([Role.INSTITUTE_ADMIN])
   @UseGuards(SupabaseAuthGuard, InActiveUserGuard, RolesGuard)
   @ApiBearerAuth('access-token')
-  async unarchive(@Param('id') id: string, @Request() req) {
+  async unarchive(@Param('id') id: crypto.UUID, @Request() req) {
     const { id: authenticatedUserId, institutionId } = req.user;
 
-    const existingUser = await this.usersService.findOne(id);
-    if (!existingUser) {
-      throw new NotFoundException('User not found');
-    }
-
-    // Only archived users can be unArchived
-    const isArchived =
-      existingUser.isActive === false &&
-      existingUser.supabaseUid &&
-      existingUser.supabaseUid !== '';
-
-    if (!isArchived) {
-      throw new BadRequestException('User is not archived');
-    }
-
-    // ✅ Check quota before unArchiving
-    const usage = await this.usersService.getUsersUsage(institutionId);
-
-    const limit =
-      (existingUser.role === Role.INSTRUCTOR
-        ? usage.instructors.limit
-        : usage.students.limit) || 0;
-
-    const consumedCount =
-      existingUser.role === Role.INSTRUCTOR
-        ? usage.instructors.consumed
-        : usage.students.consumed;
-
-    if (consumedCount >= limit) {
-      throw new BadRequestException('You have reached the limit of accounts');
-    }
-
-    // ✅ Unarchive user (reactivate)
-    return this.usersService.update(
-      {
-        isActive: true,
-        updatedBy: authenticatedUserId,
-      },
-      { institutionId, id },
+    return this.usersManagerService.unarchiveUser(
+      id,
+      authenticatedUserId,
+      institutionId,
     );
   }
 

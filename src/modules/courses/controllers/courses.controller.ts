@@ -6,6 +6,7 @@ import {
   Request,
   UseGuards,
   Controller,
+  Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 
@@ -15,7 +16,8 @@ import { Roles } from '@common/decorators/roles.decorator';
 import { InActiveUserGuard } from '@common/guards/inActiveUser.guard';
 import { SupabaseAuthGuard } from '@common/guards/supabase-auth.guard';
 
-import { CreateCourseDto } from '../dto/createCourseDto';
+import { CreateCourseDto } from '../dto/createCourse.dto';
+import { GetCoursesQueryDto } from '../dto/getCoursesQuery.dto';
 import { CoursesManagerService } from '../services/courses.manager.service';
 
 @Controller('courses')
@@ -27,13 +29,14 @@ export class CoursesController {
   @Roles([Role.INSTITUTE_ADMIN, Role.INSTRUCTOR, Role.STUDENT])
   @UseGuards(SupabaseAuthGuard, InActiveUserGuard, RolesGuard)
   @ApiBearerAuth('access-token')
-  async getAll(@Request() req) {
+  async getAll(@Request() req, @Query() query: GetCoursesQueryDto) {
     const { id: authenticatedUserId, role, institutionId } = req.user;
 
     return this.courseManagerService.getCourses(
       authenticatedUserId,
       role,
       institutionId,
+      query,
     );
   }
 

@@ -177,11 +177,26 @@ export class NotificationJobsService {
    */
   async findAll(
     where?: FindOptionsWhere<NotificationJob>,
+    page?: number,
+    limit?: number,
+    sortBy?: string,
+    sortOrder?: 'ASC' | 'DESC',
   ): Promise<NotificationJob[]> {
-    return this.notificationRepository.find({
-      where,
-      order: { createdAt: 'DESC' },
-    });
+    const query =
+      this.notificationRepository.createQueryBuilder('notification');
+
+    if (where) {
+      query.where(where);
+    }
+    if (sortBy) {
+      query.orderBy(`notification.${sortBy}`, sortOrder || 'ASC');
+    } else {
+      query.orderBy('notification.createdAt', 'DESC');
+    }
+    if (page && limit) {
+      query.skip((page - 1) * limit).take(limit);
+    }
+    return query.getMany();
   }
 
   /**
