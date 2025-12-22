@@ -45,7 +45,7 @@ export class CoursesService {
     limit?: number,
     sortBy?: string,
     sortOrder?: 'ASC' | 'DESC',
-  ): Promise<Course[]> {
+  ): Promise<[Course[], number]> {
     const query = this.courseRepository.createQueryBuilder('course');
     if (where) {
       query.where;
@@ -58,7 +58,7 @@ export class CoursesService {
     if (page && limit) {
       query.skip((page - 1) * limit).take(limit);
     }
-    return query.getMany();
+    return query.getManyAndCount();
   }
 
   async findOne(where: FindOptionsWhere<Course>): Promise<Course | null> {

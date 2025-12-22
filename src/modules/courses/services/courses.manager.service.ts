@@ -2,7 +2,7 @@
 import { UUID } from 'crypto';
 import { Queue } from 'bullmq';
 import { I18nService } from 'nestjs-i18n';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere, ILike } from 'typeorm';
 import { InjectQueue } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
@@ -19,6 +19,7 @@ import { Course } from '../entities/course.entity';
 import { CoursesService } from './courses.service';
 import { CreateCourseDto } from '../dto/createCourse.dto';
 import { GetCoursesQueryDto } from '../dto/getCoursesQuery.dto';
+import { createPaginatedResponse } from '@common/utils/pagination.util';
 
 @Injectable()
 export class CoursesManagerService {
@@ -62,7 +63,13 @@ export class CoursesManagerService {
         },
       };
     }
-    const courses = await this.coursesService.findAll(
+    if (getCoursesQuery.isActive !== undefined) {
+      where.isActive = getCoursesQuery.isActive;
+    }
+    if (getCoursesQuery.name !== undefined) {
+      where.name = ILike(`%${getCoursesQuery.name}%`);
+    }
+    const [courses, total] = await this.coursesService.findAll(
       where,
       page,
       limit,
@@ -81,14 +88,19 @@ export class CoursesManagerService {
       ),
     );
 
-    return courses.map((course, i) => {
-      return {
-        course,
-        instructorsCount: coursesInstructors[i].length,
-        studentsCount: coursesStudents[i].length,
-        mainInstructor: coursesMainInstructors[i],
-      };
-    });
+    return createPaginatedResponse(
+      courses.map((course, i) => {
+        return {
+          course,
+          instructorsCount: coursesInstructors[i].length,
+          studentsCount: coursesStudents[i].length,
+          mainInstructor: coursesMainInstructors[i],
+        };
+      }),
+      page,
+      total,
+      limit,
+    );
     // const coursesWithDetails = await Promise.all(
     //   [...courses, ...courses, ...courses, ...courses, ...courses, ...courses, ...courses, ...courses, ...courses, ...courses].map((course) => this.coursesService.getCourseDetail(course)),
     // );

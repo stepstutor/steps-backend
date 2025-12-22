@@ -12,6 +12,7 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from '../dtos/createUserDto';
 import { QueryParamsUsersDto } from '../dtos/queryParamsUsersDto';
 import { UserWithInvitationLink } from '../types/userWithInvitationLink';
+import { createPaginatedResponse } from '@common/utils/pagination.util';
 
 export class UsersManagerService {
   constructor(
@@ -28,13 +29,14 @@ export class UsersManagerService {
    */
   async getUsers(institutionId: string, params: QueryParamsUsersDto) {
     const { page, limit, sortBy, sortOrder, ...filters } = params;
-    return this.usersService.findAllCustom(
+    const [users, totalRows] = await this.usersService.findAllCustom(
       { ...filters, institutionId },
       page,
       limit,
       sortBy,
       sortOrder,
     );
+    return createPaginatedResponse(users, page, totalRows, limit);
   }
 
   /**

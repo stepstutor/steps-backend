@@ -74,8 +74,23 @@ export class UsersService {
     limit?: number,
     sortBy?: string,
     sortOrder?: 'ASC' | 'DESC',
-  ): Promise<User[]> {
+  ): Promise<[User[], number]> {
     const query = this.usersRepository.createQueryBuilder('user');
+    if (params.search) {
+      query.andWhere(
+        new Brackets((qb) => {
+          qb.where('user.firstName ILIKE :search', {
+            search: `%${params.search}%`,
+          })
+            .orWhere('user.lastName ILIKE :search', {
+              search: `%${params.search}%`,
+            })
+            .orWhere('user.email ILIKE :search', {
+              search: `%${params.search}%`,
+            });
+        }),
+      );
+    }
     if (params.role && params.role.length) {
       query.andWhere('user.role IN (:...roles)', { roles: params.role });
     }
@@ -126,7 +141,7 @@ export class UsersService {
       query.skip((page - 1) * limit).take(limit);
     }
 
-    return query.getMany();
+    return query.getManyAndCount();
   }
 
   findOne(

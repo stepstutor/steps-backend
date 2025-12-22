@@ -1,6 +1,6 @@
 // **** Library Imports ****
 import { Transform } from 'class-transformer';
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 // **** External Imports ****
@@ -39,4 +39,10 @@ export class QueryParamsUsersDto extends PaginationDTO {
     value !== undefined ? value === 'true' : undefined,
   )
   orIsMember?: boolean;
+
+  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  search?: string;
 }

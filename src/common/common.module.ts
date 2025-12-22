@@ -69,6 +69,19 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
         apiKey: configService.getOrThrow('RESEND_API_KEY'),
       }),
     }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        connection: {
+          host: configService.get('QUEUE_HOST'),
+          port: configService.get('QUEUE_PORT'),
+        },
+        defaultJobOptions: {
+          attempts: 3,
+        },
+      }),
+      inject: [ConfigService],
+    }),
     BullModule.registerQueue({
       name: NOTIFICATION_QUEUE_NAME,
     }),
