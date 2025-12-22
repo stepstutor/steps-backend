@@ -1,25 +1,35 @@
 // **** Library Imports ****
+import {
+  Logger,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { UUID } from 'crypto';
-import { Queue } from 'bullmq';
 import { I18nService } from 'nestjs-i18n';
-import { FindOptionsWhere, ILike } from 'typeorm';
 import { InjectQueue } from '@nestjs/bullmq';
+import { BulkJobOptions, Queue } from 'bullmq';
 import { ConfigService } from '@nestjs/config';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { FindOptionsWhere, ILike } from 'typeorm';
 
 // **** External Imports ****
 import { Role } from '@common/enums/userRole';
+import { User } from '@modules/user/entities/user.entity';
 import { NOTIFICATION_QUEUE_NAME } from '@common/constants';
+import { InstructorType } from '@common/enums/instructorType';
 import { EmailService } from '@common/services/email.service';
+import { createPaginatedResponse } from '@common/utils/pagination.util';
+import { UserWithInvitationLink } from '@modules/user/types/userWithInvitationLink';
 import { NotificationJob } from '@modules/notifications/entities/notification.entity';
 import { UserNotification } from '@modules/notifications/entities/userNotification.entity';
 
 // **** Internal Imports ****
 import { Course } from '../entities/course.entity';
 import { CoursesService } from './courses.service';
-import { CreateCourseDto } from '../dto/createCourse.dto';
+import { UpdateCourseDto } from '../dto/updateCourseDto';
 import { GetCoursesQueryDto } from '../dto/getCoursesQuery.dto';
-import { createPaginatedResponse } from '@common/utils/pagination.util';
+import { CreateCourseDto, StudentDto } from '../dto/createCourse.dto';
+import { CourseInstructor } from '../entities/course-instructor.entity';
 
 @Injectable()
 export class CoursesManagerService {
@@ -336,6 +346,363 @@ export class CoursesManagerService {
         `${process.env.SITE_URL}/instructor/my-courses/${result.courseEntity.id}`,
         result.institution?.language,
       );
+    }
+  }
+
+  async update(
+    id: string,
+    updateCourseBody: UpdateCourseDto,
+    authenticatedUserId: UUID,
+    role: Role,
+    institutionId: string,
+  ) {
+    const { mainInstructor, ...rest } = updateCourseBody;
+
+    let resp: ReturnType<typeof this.coursesService.modify>;
+    if (role === Role.INSTRUCTOR) {
+      resp = this.coursesService.modify(rest, null, {
+        id,
+        institutionId,
+        courseInstructors: {
+          instructorId: authenticatedUserId,
+          instructorType: InstructorType.MAIN,
+        },
+      });
+    }
+
+    if (role === Role.INSTITUTE_ADMIN) {
+      resp = this.coursesService.modify(rest, mainInstructor || null, {
+        id,
+        institutionId,
+      });
+    }
+    const responseData = await resp!;
+    if (!!responseData.updatedFields) {
+      const instructors = await (await resp!).course.courseInstructors;
+      const now = new Date();
+      const lang = (await (await resp!).course.institution)?.language;
+      instructors.forEach(async (instructor) => {
+        this.notificationQueue.add('triggered', {
+          sentAt: now,
+          title: (await resp!).course.name,
+          text: this.i18n.translate(
+            'notifications.instructors.course_edited-text',
+            { args: { changedFields: (await resp).updatedFields }, lang },
+          ),
+          linkText: this.i18n.translate(
+            'notifications.instructors.course_edited-link_text',
+            { lang },
+          ),
+          linkUrl:
+            `${this.configService.get('SITE_URL')}/instructor/my-courses/` +
+            (await resp!).course.id,
+          userId: instructor.instructorId,
+        });
+      });
+    }
+    return (await resp!).course;
+  }
+
+  async addInstructorsToCourse(
+    courseId: string,
+    instructorEmails: string[],
+    authenticatedUserId: UUID,
+    role: Role,
+    institutionId: string,
+    firstName: string,
+    lastName: string,
+  ) {
+    let where: FindOptionsWhere<Course> = {
+      institutionId,
+      id: courseId,
+    };
+
+    if (role === Role.INSTRUCTOR) {
+      where = {
+        ...where,
+        courseInstructors: {
+          instructorId: authenticatedUserId,
+          instructorType: InstructorType.MAIN,
+        },
+      };
+    }
+
+    const course = await this.coursesService.findOne(where);
+    if (!course) {
+      throw new BadRequestException();
+    }
+    const oldInstructors = await course.courseInstructors;
+
+    const institution = await course.institution;
+    const newCourseInstructorsAdded = await this.coursesService.addInstructors(
+      course,
+      instructorEmails,
+      authenticatedUserId,
+    );
+    this.sendInstructorInvitationEmails(
+      newCourseInstructorsAdded,
+      oldInstructors,
+      course,
+      firstName,
+      lastName,
+      institution?.language,
+    );
+    return true;
+  }
+
+  private async sendInstructorInvitationEmails(
+    newCourseInstructorsAdded: User[],
+    oldInstructors: CourseInstructor[],
+    course: Course,
+    firstName: string,
+    lastName: string,
+    institutionLanguage?: string,
+  ) {
+    const now = new Date();
+    const notificationObjs = await Promise.all(
+      oldInstructors.map(async (instructor) => {
+        return {
+          sentAt: now,
+          title: course.name,
+          linkText: this.i18n.translate(
+            'notifications.instructors.instructor_added-link_text',
+            { lang: institutionLanguage },
+          ),
+          linkUrl:
+            `${this.configService.get('SITE_URL')}/instructor/my-courses/` +
+            course.id,
+          userId: instructor.instructorId,
+        };
+      }),
+    );
+    if (newCourseInstructorsAdded.length) {
+      const instructorType_sub = this.i18n.translate('common.sub_instructor', {
+        lang: institutionLanguage,
+      });
+      for (const newInstructor of newCourseInstructorsAdded) {
+        notificationObjs.forEach((obj) => {
+          this.notificationQueue.add('triggered', {
+            ...obj,
+            text: this.i18n.translate(
+              'notifications.instructors.instructor_added-text',
+              {
+                args: {
+                  instructorName: `${newInstructor.firstName} ${newInstructor.lastName}`,
+                  instructorType: 'co-instructor',
+                },
+                lang: institutionLanguage,
+              },
+            ),
+          });
+        });
+        this.notificationQueue.add('triggered', {
+          sentAt: now,
+          title: course.name,
+          text: this.i18n.translate(
+            'notifications.instructors.added_to_course-text',
+            {
+              args: { instructorType: instructorType_sub },
+              lang: institutionLanguage,
+            },
+          ),
+          linkText: this.i18n.translate(
+            'notifications.instructors.added_to_course-link_text',
+            { lang: institutionLanguage },
+          ),
+          linkUrl:
+            `${this.configService.get('SITE_URL')}/instructor/my-courses/` +
+            course.id,
+          userId: newInstructor.id,
+        });
+        await this.emailService.sendCourseAssignNotificationEmailToInstructor(
+          newInstructor.email,
+          course.name,
+          `${firstName} ${lastName}`,
+          `${process.env.SITE_URL}/instructor/my-courses/${course.id}`,
+          institutionLanguage,
+        );
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+    }
+  }
+
+  async removeInstructorsFromCourse(
+    courseId: string,
+    removedInstructors: string | string[],
+    authenticatedUserId: UUID,
+    role: Role,
+    institutionId: string,
+  ) {
+    let where: FindOptionsWhere<Course> = {
+      institutionId,
+      id: courseId,
+    };
+
+    if (role === Role.INSTRUCTOR) {
+      where = {
+        ...where,
+        courseInstructors: {
+          instructorId: authenticatedUserId,
+          instructorType: InstructorType.MAIN,
+        },
+      };
+    }
+
+    const course = await this.coursesService.findOne(where);
+    if (!course) {
+      throw new BadRequestException();
+    }
+
+    // Ensure removeInstructorBody is an array
+    if (typeof removedInstructors === 'string') {
+      removedInstructors = [removedInstructors];
+    }
+
+    await this.coursesService.removeInstructors(course, removedInstructors);
+    return true;
+  }
+
+  async removeStudentsFromCourse(
+    courseId: string,
+    removedStudents: string | string[],
+    authenticatedUserId: UUID,
+    role: Role,
+    institutionId: string,
+  ) {
+    let where: FindOptionsWhere<Course> = {
+      institutionId,
+      id: courseId,
+    };
+
+    if (role === Role.INSTRUCTOR) {
+      where = {
+        ...where,
+        courseInstructors: {
+          instructorId: authenticatedUserId,
+          instructorType: InstructorType.MAIN,
+        },
+      };
+    }
+
+    const course = await this.coursesService.findOne(where);
+    if (!course) {
+      throw new BadRequestException();
+    }
+
+    // Ensure removeStudentsBody is an array
+    if (typeof removedStudents === 'string') {
+      removedStudents = [removedStudents];
+    }
+
+    await this.coursesService.removeStudents(course, removedStudents);
+    return true;
+  }
+
+  async addStudentsToCourse(
+    courseId: string,
+    studentDtos: StudentDto[],
+    authenticatedUserId: UUID,
+    role: Role,
+    institutionId: string,
+    firstName: string,
+    lastName: string,
+  ) {
+    let where: FindOptionsWhere<Course> = {
+      institutionId,
+      id: courseId,
+    };
+
+    if (role === Role.INSTRUCTOR) {
+      where = {
+        ...where,
+        courseInstructors: {
+          instructorId: authenticatedUserId,
+          instructorType: InstructorType.MAIN,
+        },
+      };
+    }
+
+    const course = await this.coursesService.findOne(where);
+    if (!course) {
+      throw new BadRequestException();
+    }
+
+    const institution = await course.institution;
+    const { newUsers: newStudents, newCourseUsersAdded } =
+      await this.coursesService.addStudents(
+        course,
+        studentDtos,
+        authenticatedUserId,
+        role === Role.INSTITUTE_ADMIN,
+      );
+    this.sendStudentInvitationEmails(
+      newStudents,
+      newCourseUsersAdded,
+      course,
+      firstName,
+      lastName,
+      institution?.language,
+    );
+    return true;
+  }
+
+  private async sendStudentInvitationEmails(
+    newStudents: UserWithInvitationLink[],
+    newCourseUsersAdded: User[],
+    course: Course,
+    firstName: string,
+    lastName: string,
+    institutionLanguage?: string,
+  ) {
+    const now = new Date();
+    const lang = (await course.institution)?.language;
+    const notificationObjs: {
+      name: 'scheduled' | 'triggered';
+      data: Partial<UserNotification>;
+      opts?: BulkJobOptions;
+    }[] = [];
+    if (newStudents.length) {
+      for (const newStudent of newStudents) {
+        await this.emailService.sendInvitationEmail(
+          `${newStudent.firstName} ${newStudent.lastName}`,
+          newStudent.email,
+          newStudent.invitationLink!,
+          institutionLanguage,
+        );
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+    }
+    if (newCourseUsersAdded.length) {
+      for (const newStudentEmail of newCourseUsersAdded) {
+        notificationObjs.push({
+          name: 'triggered',
+          data: {
+            sentAt: now,
+            title: course.name,
+            text: this.i18n.translate(
+              'notifications.students.added_to_course-text',
+              { lang },
+            ),
+            linkText: this.i18n.translate(
+              'notifications.students.added_to_course-link_text',
+              { lang },
+            ),
+            linkUrl:
+              `${this.configService.get('SITE_URL')}/student/my-courses/` +
+              course.id,
+            userId: newStudentEmail.id,
+          },
+        });
+        await this.emailService.sendCourseAssignNotificationEmailToStudent(
+          newStudentEmail.email,
+          course.name,
+          `${firstName} ${lastName}`,
+          `${process.env.SITE_URL}/student/my-courses/${course.id}`,
+          institutionLanguage,
+        );
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+      this.notificationQueue.addBulk(notificationObjs);
     }
   }
 }

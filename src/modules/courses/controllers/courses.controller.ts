@@ -1,23 +1,30 @@
+// **** Library Imports ****
 import {
   Get,
+  Put,
   Body,
   Post,
   Param,
+  Query,
+  Delete,
   Request,
+  Response,
   UseGuards,
   Controller,
-  Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 
+// **** External Imports ****
 import { Role } from '@common/enums/userRole';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
 import { InActiveUserGuard } from '@common/guards/inActiveUser.guard';
 import { SupabaseAuthGuard } from '@common/guards/supabase-auth.guard';
 
-import { CreateCourseDto } from '../dto/createCourse.dto';
+// **** Internal Imports ****
+import { UpdateCourseDto } from '../dto/updateCourseDto';
 import { GetCoursesQueryDto } from '../dto/getCoursesQuery.dto';
+import { CreateCourseDto, StudentDto } from '../dto/createCourse.dto';
 import { CoursesManagerService } from '../services/courses.manager.service';
 
 @Controller('courses')
@@ -79,6 +86,127 @@ export class CoursesController {
       authenticatedUserEmail,
       firstName,
       lastName,
+    );
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Update course' })
+  @Roles([Role.INSTITUTE_ADMIN, Role.INSTRUCTOR])
+  @UseGuards(SupabaseAuthGuard, InActiveUserGuard, RolesGuard)
+  @ApiBearerAuth('access-token')
+  async update(
+    @Param('id') id: string,
+    @Request() req,
+    @Body() updateCourseBody: UpdateCourseDto,
+  ) {
+    const { id: authenticatedUserId, role, institutionId } = req.user;
+    return this.courseManagerService.update(
+      id,
+      updateCourseBody,
+      authenticatedUserId,
+      role,
+      institutionId,
+    );
+  }
+
+  @Post(':courseId/instructors')
+  @ApiOperation({ summary: 'Add instructors to a course' })
+  @Roles([Role.INSTITUTE_ADMIN, Role.INSTRUCTOR])
+  @UseGuards(SupabaseAuthGuard, InActiveUserGuard, RolesGuard)
+  @ApiBearerAuth('access-token')
+  async addInstructors(
+    @Param('courseId') courseId: string,
+    @Request() req,
+    @Response() res,
+    @Body() addInstructorsBody: string[],
+  ) {
+    const {
+      id: authenticatedUserId,
+      role,
+      institutionId,
+      firstName,
+      lastName,
+    } = req.user;
+
+    this.courseManagerService.addInstructorsToCourse(
+      courseId,
+      addInstructorsBody,
+      authenticatedUserId,
+      role,
+      institutionId,
+      firstName,
+      lastName,
+    );
+  }
+
+  @Delete(':courseId/instructors')
+  @ApiOperation({ summary: 'Remove instructors from a course' })
+  @Roles([Role.INSTITUTE_ADMIN, Role.INSTRUCTOR])
+  @UseGuards(SupabaseAuthGuard, InActiveUserGuard, RolesGuard)
+  @ApiBearerAuth('access-token')
+  async removeInstructor(
+    @Param('courseId') courseId: string,
+    @Request() req,
+    @Body() removeInstructorBody: string | string[],
+  ) {
+    const { id: authenticatedUserId, role, institutionId } = req.user;
+    return this.courseManagerService.removeInstructorsFromCourse(
+      courseId,
+      removeInstructorBody,
+      authenticatedUserId,
+      role,
+      institutionId,
+    );
+  }
+
+  @Post(':courseId/students')
+  @ApiOperation({ summary: 'Add students to a course' })
+  @Roles([Role.INSTITUTE_ADMIN, Role.INSTRUCTOR])
+  @UseGuards(SupabaseAuthGuard, InActiveUserGuard, RolesGuard)
+  @ApiBearerAuth('access-token')
+  @ApiBody({ type: [StudentDto] })
+  async addStudents(
+    @Param('courseId') courseId: string,
+    @Request() req,
+    @Body() addStudentsBody: StudentDto[],
+  ) {
+    const {
+      id: authenticatedUserId,
+      role,
+      institutionId,
+      firstName,
+      lastName,
+    } = req.user;
+
+    this.courseManagerService.addStudentsToCourse(
+      courseId,
+      addStudentsBody,
+      authenticatedUserId,
+      role,
+      institutionId,
+      firstName,
+      lastName,
+    );
+  }
+
+  @Delete(':courseId/students')
+  @ApiOperation({ summary: 'Remove students from a course' })
+  @Roles([Role.INSTITUTE_ADMIN, Role.INSTRUCTOR])
+  @UseGuards(SupabaseAuthGuard, InActiveUserGuard, RolesGuard)
+  @ApiBearerAuth('access-token')
+  async removeStudents(
+    @Param('courseId') courseId: string,
+    @Request() req,
+    @Body() removeStudentsBody: string[],
+  ) {
+    const { id: authenticatedUserId, role, institutionId } = req.user;
+
+    this.courseManagerService.removeStudentsFromCourse(
+      courseId,
+      removeStudentsBody,
+      authenticatedUserId,
+      role,
+      institutionId,
     );
   }
 }
