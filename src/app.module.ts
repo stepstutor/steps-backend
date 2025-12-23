@@ -7,7 +7,10 @@ import { InstitutionsModule } from '@modules/institutions/institutions.module';
 import { InvitationsModule } from '@modules/invitations/invitations.module';
 import { NotificationsModule } from '@modules/notifications/notifications.module';
 import { UsersModule } from '@modules/user/users.module';
-import { ResponseInterceptor } from '@common/interceptors';
+import {
+  RequestLoggingInterceptor,
+  ResponseInterceptor,
+} from '@common/interceptors';
 
 @Module({
   imports: [
@@ -20,6 +23,10 @@ import { ResponseInterceptor } from '@common/interceptors';
     NotificationsModule,
   ],
   providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RequestLoggingInterceptor,
+    },
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor,

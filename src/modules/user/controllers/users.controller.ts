@@ -8,7 +8,6 @@ import {
   Query,
   Delete,
   Request,
-  Response,
   UseGuards,
   Controller,
   UploadedFile,
@@ -74,11 +73,7 @@ export class UsersController {
   @UseGuards(SupabaseAuthGuard, InActiveUserGuard, RolesGuard)
   @ApiBearerAuth('access-token')
   @ApiBody({ type: [CreateUserDto] })
-  async create(
-    @Request() req,
-    @Response() res,
-    @Body() usersBody: CreateUserDto[],
-  ) {
+  async create(@Request() req, @Body() usersBody: CreateUserDto[]) {
     const { id: authenticatedUserId, institutionId } = req.user;
     return this.usersManagerService.createUsers(
       authenticatedUserId,
