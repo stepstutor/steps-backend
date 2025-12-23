@@ -17,6 +17,7 @@ import { InstitutionsModule } from '@modules/institutions/institutions.module';
 import { NotificationsModule } from '@modules/notifications/notifications.module';
 import { LogsAndTracksModule } from '@modules/logs-and-tracks/logs-and-tracks.module';
 import { ArticlesModule } from '@modules/articles/articles.module';
+import { QueriesModule } from '@modules/queries/queries.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ArticlesModule } from '@modules/articles/articles.module';
     UsersModule,
     CommonModule,
     CoursesModule,
+    QueriesModule,
     ArticlesModule,
     DashboardModule,
     InvitationsModule,
