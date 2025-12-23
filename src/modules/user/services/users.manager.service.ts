@@ -4,7 +4,11 @@ import { UUID } from 'crypto';
 // **** External Imports ****
 import { Role } from '@common/enums/userRole';
 import { EmailService } from '@common/services/email.service';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InstitutionsService } from '@modules/institutions/institutions.service';
 
 // **** Internal Imports ****
@@ -14,6 +18,7 @@ import { QueryParamsUsersDto } from '../dtos/queryParamsUsersDto';
 import { UserWithInvitationLink } from '../types/userWithInvitationLink';
 import { createPaginatedResponse } from '@common/utils/pagination.util';
 
+@Injectable()
 export class UsersManagerService {
   constructor(
     private readonly usersService: UsersService,
