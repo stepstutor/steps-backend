@@ -1,24 +1,27 @@
 // **** Library Imports ****
 import * as path from 'path';
+import { BullModule } from '@nestjs/bullmq';
 import { ResendModule } from 'nestjs-resend';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SupabaseModule } from 'nestjs-supabase-js';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { ExpressAdapter } from '@bull-board/express';
 import { forwardRef, Module, Scope } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { I18nModule, QueryResolver, AcceptLanguageResolver } from 'nestjs-i18n';
 
 // **** External Imports ****
 import { UsersModule } from '@modules/user/users.module';
+import { NotificationsModule } from '@modules/notifications/notifications.module';
+import { LogsAndTracksModule } from '@modules/logs-and-tracks/logs-and-tracks.module';
 
 // **** Internal Imports ****
 import { S3Service } from './services/s3.service';
+import { NOTIFICATION_QUEUE_NAME } from './constants';
 import { EmailService } from './services/email.service';
 import { UploadService } from './services/upload.service';
-import { BullModule } from '@nestjs/bullmq';
-import { NOTIFICATION_QUEUE_NAME } from './constants';
-import { BullBoardModule } from '@bull-board/nestjs';
-import { ExpressAdapter } from '@bull-board/express';
-import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import { NotificationConsumer } from './consumers/notification.consumer';
 
 @Module({
   imports: [
@@ -93,7 +96,9 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
       name: NOTIFICATION_QUEUE_NAME,
       adapter: BullMQAdapter, //or use BullAdapter if you're using bull instead of bullMQ
     }),
+    forwardRef(() => NotificationsModule),
     forwardRef(() => UsersModule),
+    LogsAndTracksModule,
   ],
   providers: [
     {
@@ -107,6 +112,7 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
     UploadService,
     BullModule,
     EmailService,
+    NotificationConsumer,
   ],
   exports: [
     'AWS_S3_BUCKET_NAME',
@@ -114,6 +120,7 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
     BullModule,
     UploadService,
     EmailService,
+    LogsAndTracksModule,
   ],
 })
 export class CommonModule {}

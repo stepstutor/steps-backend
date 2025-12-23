@@ -2,6 +2,7 @@ import {
   Entity,
   Column,
   ManyToOne,
+  OneToMany,
   JoinColumn,
   DeleteDateColumn,
   PrimaryGeneratedColumn,
@@ -9,7 +10,7 @@ import {
 
 import { Role } from '@common/enums/userRole';
 import { Base } from '@common/entities/base.entity';
-// import { Query } from '../../queries/entities/query.entity';
+import { Query } from '../../queries/entities/query.entity';
 import { Institution } from '@modules/institutions/entities/institutions.entity';
 
 @Entity()
@@ -38,9 +39,8 @@ export class User extends Base {
   @Column({ nullable: true, default: '' })
   supabaseUid: string;
 
-  // * Commented out for now, can be used later if needed
-  // @Column({ type: 'jsonb', nullable: true })
-  // walkthroughScreens: string[];
+  @Column({ type: 'jsonb', nullable: true })
+  walkthroughScreens: string[];
 
   @Column({ type: 'uuid', nullable: true, default: null })
   institutionId: string | null;
@@ -51,8 +51,8 @@ export class User extends Base {
   })
   institution: Promise<Institution | null>;
 
-  // @OneToMany(() => Query, (query) => query.user)
-  // queries: Query[];
+  @OneToMany(() => Query, (query) => query.user)
+  queries: Query[];
 
   @DeleteDateColumn()
   deletedAt?: Date;

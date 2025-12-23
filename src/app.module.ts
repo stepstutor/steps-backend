@@ -1,16 +1,22 @@
+// **** Library Imports ****
 import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { CoursesModule } from './modules/courses/courses.module';
+
+// **** External Imports ****
+import {
+  ResponseInterceptor,
+  RequestLoggingInterceptor,
+} from '@common/interceptors';
 import { CommonModule } from '@common/common.module';
 import { AuthModule } from '@modules/auth/auth.module';
-import { InstitutionsModule } from '@modules/institutions/institutions.module';
-import { InvitationsModule } from '@modules/invitations/invitations.module';
-import { NotificationsModule } from '@modules/notifications/notifications.module';
 import { UsersModule } from '@modules/user/users.module';
-import {
-  RequestLoggingInterceptor,
-  ResponseInterceptor,
-} from '@common/interceptors';
+import { CoursesModule } from '@modules/courses/courses.module';
+import { DashboardModule } from '@modules/dashboard/dashboard.module';
+import { InvitationsModule } from '@modules/invitations/invitations.module';
+import { InstitutionsModule } from '@modules/institutions/institutions.module';
+import { NotificationsModule } from '@modules/notifications/notifications.module';
+import { LogsAndTracksModule } from '@modules/logs-and-tracks/logs-and-tracks.module';
+import { ArticlesModule } from '@modules/articles/articles.module';
 
 @Module({
   imports: [
@@ -18,8 +24,11 @@ import {
     UsersModule,
     CommonModule,
     CoursesModule,
+    ArticlesModule,
+    DashboardModule,
     InvitationsModule,
     InstitutionsModule,
+    LogsAndTracksModule,
     NotificationsModule,
   ],
   providers: [
