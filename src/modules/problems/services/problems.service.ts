@@ -4,7 +4,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { FindOptionsWhere, IsNull, Not, Repository } from 'typeorm';
 
 import { ProblemTag } from '../entities/problem-tag.entity';
-import { UpdateProblemDto } from '../dto/update-problem.dto';
 import { ProblemLibrary } from '../entities/problem-library.entity';
 import { CreateProblemData, Problem } from '../entities/problem.entity';
 
@@ -29,14 +28,9 @@ export class ProblemsService {
     createProblemData: CreateProblemData & { problemTags?: string[] },
     authenticatedUserId: UUID,
   ): Promise<Problem> {
-    const [course, instructor] = await Promise.all([
-      this.coursesService.findOne({ id: createProblemData.courseId }),
-      this.usersService.findOne(createProblemData.instructorId),
-    ]);
-
-    if (!course) {
-      throw new NotFoundException('Course not found');
-    }
+    const instructor = this.usersService.findOne(
+      createProblemData.instructorId,
+    );
 
     if (!instructor) {
       throw new NotFoundException('Instructor not found');
@@ -95,7 +89,7 @@ export class ProblemsService {
 
   async update(
     id: string,
-    updateProblemDto: UpdateProblemDto,
+    updateProblemDto: Partial<CreateProblemData & { problemTags?: string[] }>,
   ): Promise<Problem> {
     const problem = await this.findOne({ id });
     if (
@@ -133,12 +127,12 @@ export class ProblemsService {
   }
 
   async getProblemsByLibraryType(
-    institutionId?: string,
+    institutionId?: string | null,
     page?: number,
     limit?: number,
     sortBy?: string,
     sortOrder?: 'ASC' | 'DESC',
-  ): Promise<Problem[]> {
+  ): Promise<[Problem[], number]> {
     const query = this.problemLibraryRepository
       .createQueryBuilder('problemLibrary')
       .leftJoinAndSelect('problemLibrary.problem', 'problem');
@@ -155,11 +149,12 @@ export class ProblemsService {
     if (page && limit) {
       query.skip((page - 1) * limit).take(limit);
     }
-    const results = await query.getMany();
-    return results.map((result) => ({
+    const results = await query.getManyAndCount();
+    const problems = results[0].map((result) => ({
       ...result.problem,
       instructorId: result.instructorId,
     }));
+    return [problems, results[1]];
   }
 
   async removeProblemFromLibrary(

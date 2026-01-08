@@ -71,20 +71,6 @@ export class CreateProblemDto {
   @IsNotEmpty()
   wrapUp: string;
 
-  @ApiProperty({ example: '9f1d2b42-6a3e-4da5-9f13-2db5532d0c4d' })
-  @IsUUID()
-  @IsNotEmpty()
-  courseId: string;
-
-  @ApiProperty({ example: 'f21b1e28-4e18-4d89-87f0-2b88d84c3a7b' })
-  @IsUUID()
-  @IsNotEmpty()
-  instructorId: string;
-
-  @ApiProperty({ example: true })
-  @IsNotEmpty()
-  publishToMyLibrary: boolean;
-
   @ApiProperty({ example: false })
   @IsNotEmpty()
   publishToInstitutionLibrary: boolean;

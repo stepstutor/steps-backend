@@ -11,6 +11,7 @@ import { GetProblemsQueryDto } from '../dto/get-problems-query.dto';
 import { Role } from '@common/enums/userRole';
 import { PublicationType } from '@common/enums/publication-type';
 import { UsersService } from '@modules/user/services/users.service';
+import { createPaginatedResponse } from '@common/utils/pagination.util';
 
 @Injectable()
 export class ProblemsManagerService {
@@ -21,13 +22,13 @@ export class ProblemsManagerService {
 
   async getProblems(
     authenticatedUserId: string,
-    role: Role,
+    role: Omit<Role, Role.STUDENT>,
     institutionId: string,
     query: GetProblemsQueryDto,
   ) {
     const { libraryType } = query;
     if (!libraryType && role === Role.INSTRUCTOR) {
-      this.problemsService.findAll(
+      const [problems, total] = await this.problemsService.findAll(
         {
           instructorId: authenticatedUserId,
           courseId: IsNull(),
@@ -37,19 +38,18 @@ export class ProblemsManagerService {
         query.sortBy,
         query.sortOrder,
       );
-    } else if (
-      libraryType &&
-      (role === Role.INSTITUTE_ADMIN || role === Role.SUPER_ADMIN)
-    ) {
+      return createPaginatedResponse(problems, query.page, total, query.limit);
+    } else if (libraryType) {
       // Fetch the problems from the library
-      const problems = await this.problemsService.getProblemsByLibraryType(
-        institutionId,
-        query.page,
-        query.limit,
-        query.sortBy,
-        query.sortOrder,
-      );
-      return Promise.all(
+      const [problems, total] =
+        await this.problemsService.getProblemsByLibraryType(
+          libraryType === 'PUBLIC' ? null : institutionId,
+          query.page,
+          query.limit,
+          query.sortBy,
+          query.sortOrder,
+        );
+      const mappedProblems = await Promise.all(
         problems.map(async (problem) => {
           const lastModifiedBy = await this.usersService.findOne(
             problem.instructorId,
@@ -66,6 +66,12 @@ export class ProblemsManagerService {
           };
         }),
       );
+      return createPaginatedResponse(
+        mappedProblems,
+        query.page,
+        total,
+        query.limit,
+      );
     }
   }
 
@@ -75,7 +81,6 @@ export class ProblemsManagerService {
     institutionId: UUID,
   ) {
     const {
-      publishToMyLibrary: _,
       publishToPublicLibrary,
       publishToInstitutionLibrary,
       ...problemData
