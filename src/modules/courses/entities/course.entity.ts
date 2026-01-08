@@ -1,3 +1,4 @@
+// **** Library Imports ****
 import {
   Entity,
   Column,
@@ -7,10 +8,12 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
+// **** External Imports ****
 import { Base } from '@common/entities/base.entity';
 import { StudentYear } from '@common/enums/studentYear';
 import { Institution } from '@modules/institutions/entities/institutions.entity';
 
+// **** Internal Imports ****
 import { CourseStudent } from './course-student.entity';
 import { CourseInstructor } from './course-instructor.entity';
 

@@ -1,0 +1,256 @@
+import { UUID } from 'crypto';
+import { IsNull } from 'typeorm';
+import { BadRequestException, Injectable } from '@nestjs/common';
+
+import { ProblemsService } from './problems.service';
+import { CreateProblemDto } from '../dto/create-problem.dto';
+import { UpdateProblemDto } from '../dto/update-problem.dto';
+import { PublishProblemDto } from '../dto/publish-problem.dto';
+import { GetProblemsQueryDto } from '../dto/get-problems-query.dto';
+
+import { Role } from '@common/enums/userRole';
+import { PublicationType } from '@common/enums/publication-type';
+import { UsersService } from '@modules/user/services/users.service';
+
+@Injectable()
+export class ProblemsManagerService {
+  constructor(
+    private readonly problemsService: ProblemsService,
+    private readonly usersService: UsersService,
+  ) {}
+
+  async getProblems(
+    authenticatedUserId: string,
+    role: Role,
+    institutionId: string,
+    query: GetProblemsQueryDto,
+  ) {
+    const { libraryType } = query;
+    if (!libraryType && role === Role.INSTRUCTOR) {
+      this.problemsService.findAll(
+        {
+          instructorId: authenticatedUserId,
+          courseId: IsNull(),
+        },
+        query.page,
+        query.limit,
+        query.sortBy,
+        query.sortOrder,
+      );
+    } else if (
+      libraryType &&
+      (role === Role.INSTITUTE_ADMIN || role === Role.SUPER_ADMIN)
+    ) {
+      // Fetch the problems from the library
+      const problems = await this.problemsService.getProblemsByLibraryType(
+        institutionId,
+        query.page,
+        query.limit,
+        query.sortBy,
+        query.sortOrder,
+      );
+      return Promise.all(
+        problems.map(async (problem) => {
+          const lastModifiedBy = await this.usersService.findOne(
+            problem.instructorId,
+            true,
+            ['institution'],
+          );
+          const institution = await lastModifiedBy?.institution;
+          return {
+            ...problem,
+            instructor:
+              lastModifiedBy?.firstName + ' ' + lastModifiedBy?.lastName,
+            country: institution?.country,
+            university: institution?.name,
+          };
+        }),
+      );
+    }
+  }
+
+  async createProblem(
+    createProblemDto: CreateProblemDto,
+    authenticatedUserId: UUID,
+    institutionId: UUID,
+  ) {
+    const {
+      publishToMyLibrary: _,
+      publishToPublicLibrary,
+      publishToInstitutionLibrary,
+      ...problemData
+    } = createProblemDto;
+    const problem = await this.problemsService.create(
+      {
+        ...problemData,
+        instructorId: authenticatedUserId,
+      },
+      authenticatedUserId,
+    );
+    if (publishToInstitutionLibrary) {
+      // Publish to library
+      this.problemsService.publishProblemToLibrary(
+        problem.id,
+        publishToInstitutionLibrary ? institutionId : null,
+        authenticatedUserId,
+      );
+    }
+    if (publishToPublicLibrary) {
+      this.problemsService.publishProblemToLibrary(
+        problem.id,
+        null,
+        authenticatedUserId,
+      );
+    }
+    return problem;
+  }
+
+  async getProblemById(
+    problemId: string,
+    authenticatedUserId: string,
+    role: Omit<Role, 'STUDENT'>,
+  ) {
+    if (role === Role.INSTRUCTOR) {
+      const problem = await this.problemsService.findOne({
+        id: problemId,
+        instructorId: authenticatedUserId,
+      });
+      if (!problem) {
+        throw new BadRequestException('Problem not found or access denied');
+      }
+      return problem;
+    } else {
+      const problem = await this.problemsService.findOne({
+        id: problemId,
+        instructorId: IsNull(),
+      });
+      if (!problem) {
+        throw new BadRequestException('Problem not found or access denied');
+      }
+      if (!(await problem.libraryEntry)) {
+        throw new BadRequestException(
+          'Only library problems can be accessed by admins',
+        );
+      }
+      return problem;
+    }
+  }
+
+  async updateProblem(
+    problemId: string,
+    updateProblemDto: UpdateProblemDto,
+    authenticatedUserId: string,
+    role: Omit<Role, 'STUDENT'>,
+  ) {
+    if (role === Role.INSTRUCTOR) {
+      const problem = await this.problemsService.findOne({
+        id: problemId,
+        instructorId: authenticatedUserId,
+      });
+      if (!problem) {
+        throw new BadRequestException('Problem not found or access denied');
+      }
+      return this.problemsService.update(problemId, updateProblemDto);
+    } else {
+      const problem = await this.problemsService.findOne({
+        id: problemId,
+        instructorId: IsNull(),
+      });
+      if (!problem) {
+        throw new BadRequestException('Problem not found or access denied');
+      }
+      if (!(await problem.libraryEntry)) {
+        throw new BadRequestException(
+          'Only library problems can be updated by admins',
+        );
+      }
+      return this.problemsService.update(problemId, updateProblemDto);
+    }
+  }
+
+  async deleteProblem(
+    problemId: string,
+    authenticatedUserId: string,
+    role: Omit<Role, 'STUDENT'>,
+  ) {
+    if (role === Role.INSTRUCTOR) {
+      const problem = await this.problemsService.findOne({
+        id: problemId,
+        instructorId: authenticatedUserId,
+      });
+      if (!problem) {
+        throw new BadRequestException('Problem not found or access denied');
+      }
+      return this.problemsService.remove(problemId);
+    } else {
+      await this.problemsService.removeProblemFromLibrary(problemId, role);
+      const problem = await this.problemsService.findOne({
+        id: problemId,
+        instructorId: IsNull(),
+      });
+      if (!problem) {
+        throw new BadRequestException('Problem not found or access denied');
+      }
+      if (!(await problem.libraryEntry)) {
+        throw new BadRequestException(
+          'Only library problems can be deleted by admins',
+        );
+      }
+      return this.problemsService.remove(problemId);
+    }
+  }
+
+  async publishProblem(
+    problemId: string,
+    publishProblemDto: PublishProblemDto,
+    authenticatedUserId: UUID,
+    institutionId: UUID | null,
+  ) {
+    const { publicationType } = publishProblemDto;
+
+    const publisherId = authenticatedUserId;
+
+    if (!publisherId) {
+      throw new BadRequestException('Instructor ID is required to publish.');
+    }
+
+    if (publicationType === PublicationType.INSTITUTION) {
+      const targetInstitutionId = institutionId;
+      if (!targetInstitutionId) {
+        throw new BadRequestException(
+          'Institution ID is required to publish to the institution library.',
+        );
+      }
+      return this.problemsService.publishProblemToLibrary(
+        problemId,
+        targetInstitutionId,
+        publisherId,
+      );
+    }
+
+    if (publicationType === PublicationType.PUBLIC) {
+      return this.problemsService.publishProblemToLibrary(
+        problemId,
+        null,
+        publisherId,
+      );
+    }
+  }
+
+  async copyProblem(
+    problemId: string,
+    authenticatedUserId: UUID,
+    institutionId: UUID | null,
+  ) {
+    if (!institutionId) {
+      throw new BadRequestException(
+        'Instructor must belong to an institution to copy problems.',
+      );
+    }
+
+    return this.problemsService.copyProblemFromLibrary(
+      problemId,
+      authenticatedUserId,
+    );
+  }
+}
