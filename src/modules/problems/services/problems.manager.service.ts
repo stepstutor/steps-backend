@@ -33,12 +33,27 @@ export class ProblemsManagerService {
           instructorId: authenticatedUserId,
           courseId: IsNull(),
         },
+        ['tags'],
         query.page,
         query.limit,
         query.sortBy,
         query.sortOrder,
       );
-      return createPaginatedResponse(problems, query.page, total, query.limit);
+      const mappedProblems = await Promise.all(
+        problems.map(async (problem) => ({
+          ...problem,
+          solutionKeyUploads: [],
+          wrapUpUploads: [],
+          problemTextUploads: [],
+          tags: [...(await problem.tags)],
+        })),
+      );
+      return createPaginatedResponse(
+        mappedProblems,
+        query.page,
+        total,
+        query.limit,
+      );
     } else if (libraryType) {
       // Fetch the problems from the library
       const [problems, total] =
@@ -63,6 +78,10 @@ export class ProblemsManagerService {
               lastModifiedBy?.firstName + ' ' + lastModifiedBy?.lastName,
             country: institution?.country,
             university: institution?.name,
+            solutionKeyUploads: [],
+            wrapUpUploads: [],
+            problemTextUploads: [],
+            tags: [...(await problem.tags)],
           };
         }),
       );
@@ -89,6 +108,7 @@ export class ProblemsManagerService {
       {
         ...problemData,
         instructorId: authenticatedUserId,
+        isDraft: false,
       },
       authenticatedUserId,
     );
@@ -107,6 +127,26 @@ export class ProblemsManagerService {
         authenticatedUserId,
       );
     }
+    return problem;
+  }
+
+  async createDraftProblem(
+    createProblemDto: CreateProblemDto,
+    authenticatedUserId: UUID,
+  ) {
+    const {
+      publishToPublicLibrary: _,
+      publishToInstitutionLibrary: __,
+      ...problemData
+    } = createProblemDto;
+    const problem = await this.problemsService.create(
+      {
+        ...problemData,
+        instructorId: authenticatedUserId,
+        isDraft: true,
+      },
+      authenticatedUserId,
+    );
     return problem;
   }
 

@@ -9,6 +9,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   OneToOne,
+  Check,
 } from 'typeorm';
 
 import { Base } from '@common/entities/base.entity';
@@ -20,41 +21,44 @@ import { ProblemTag } from './problem-tag.entity';
 import { ProblemLibrary } from './problem-library.entity';
 
 @Entity()
+@Check(
+  '"isDraft" OR ("title" IS NOT NULL AND "description" IS NOT NULL AND "statement" IS NOT NULL AND "discipline" IS NOT NULL AND "essentialConcepts" IS NOT NULL AND "conceptsConnection" IS NOT NULL AND "commonMistakes" IS NOT NULL AND "additionalInformation" IS NOT NULL AND "instructorPlan" IS NOT NULL AND "solutionKey" IS NOT NULL AND "instructorId" IS NOT NULL)',
+)
 export class Problem extends Base {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ nullable: true })
   title: string;
 
-  @Column()
+  @Column({ nullable: true })
   description: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   statement: string;
 
-  @Column()
+  @Column({ nullable: true })
   discipline: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   essentialConcepts: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   conceptsConnection: string;
 
   @Column({ type: 'text', nullable: true, default: null })
   assumptions: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   commonMistakes: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   additionalInformation: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   instructorPlan: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', nullable: true })
   solutionKey: string;
 
   @Column({ type: 'text', nullable: true, default: null })
@@ -63,14 +67,17 @@ export class Problem extends Base {
   @Column({ type: 'uuid', nullable: true, default: null })
   courseId: string;
 
+  @Column({ default: false })
+  isDraft: boolean;
+
   @ManyToOne(() => Course, { nullable: true })
   @JoinColumn({ name: 'courseId' })
   course: Course;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', nullable: true })
   instructorId: string;
 
-  @ManyToOne(() => User, { nullable: false })
+  @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'instructorId' })
   instructor: User;
 

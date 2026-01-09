@@ -83,6 +83,21 @@ export class ProblemsController {
     );
   }
 
+  @Post('/draft')
+  @ApiOperation({ summary: 'Create problem' })
+  @Roles([Role.INSTRUCTOR])
+  @ApiBody({ type: CreateProblemDto })
+  createDraftProblem(
+    @Body() createProblemDto: CreateProblemDto,
+    @Request() req,
+  ) {
+    const { id: authenticatedUserId } = req.user;
+    return this.problemsManager.createDraftProblem(
+      createProblemDto,
+      authenticatedUserId,
+    );
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get problem by id' })
   @Roles([Role.INSTITUTE_ADMIN, Role.INSTRUCTOR, Role.SUPER_ADMIN])

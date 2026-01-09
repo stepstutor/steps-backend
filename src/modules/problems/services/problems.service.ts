@@ -57,6 +57,7 @@ export class ProblemsService {
 
   async findAll(
     where?: FindOptionsWhere<Problem>,
+    relations?: string[],
     page?: number,
     limit?: number,
     sortBy?: string,
@@ -72,6 +73,11 @@ export class ProblemsService {
     }
     if (page && limit) {
       query.skip((page - 1) * limit).take(limit);
+    }
+    if (relations && relations.length > 0) {
+      relations.forEach((relation) => {
+        query.leftJoinAndSelect(`problem.${relation}`, relation);
+      });
     }
     return await query.getManyAndCount();
   }
