@@ -1,14 +1,23 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayMaxSize, IsArray, IsNotEmpty, IsUUID } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsNotEmpty,
+  IsOptional,
+  IsUUID,
+  ValidateIf,
+} from 'class-validator';
 
 export class CreateProblemDto {
   @ApiProperty({ example: 'Acute Myocardial Infarction Case' })
+  @ValidateIf((o) => !o.isDraft)
   @IsNotEmpty()
   title: string;
 
   @ApiProperty({
     example: 'Clinical reasoning exercise for cardiology fellows.',
   })
+  @ValidateIf((o) => !o.isDraft)
   @IsNotEmpty()
   description: string;
 
@@ -16,16 +25,19 @@ export class CreateProblemDto {
     example:
       'A 58-year-old patient presents with chest pain and diaphoresis...',
   })
+  @ValidateIf((o) => !o.isDraft)
   @IsNotEmpty()
   statement: string;
 
   @ApiProperty({ example: 'Cardiology' })
+  @ValidateIf((o) => !o.isDraft)
   @IsNotEmpty()
   discipline: string;
 
   @ApiProperty({
     example: 'Coronary artery occlusion, troponin interpretation, ECG changes.',
   })
+  @ValidateIf((o) => !o.isDraft)
   @IsNotEmpty()
   essentialConcepts: string;
 
@@ -33,22 +45,26 @@ export class CreateProblemDto {
     example:
       'Explores links between ischemia, biomarkers, and imaging findings.',
   })
+  @ValidateIf((o) => !o.isDraft)
   @IsNotEmpty()
   conceptsConnection: string;
 
   @ApiProperty({
     example: 'Assume timely access to cath lab and standard lab panels.',
   })
-  @IsNotEmpty()
-  assumptions: string;
+  @ValidateIf((o) => !o.isDraft)
+  @IsOptional()
+  assumptions?: string;
 
   @ApiProperty({ example: 'Commonly confuse STEMI and NSTEMI criteria.' })
+  @ValidateIf((o) => !o.isDraft)
   @IsNotEmpty()
   commonMistakes: string;
 
   @ApiProperty({
     example: 'Include telemetry data and prior stress test results.',
   })
+  @ValidateIf((o) => !o.isDraft)
   @IsNotEmpty()
   additionalInformation: string;
 
@@ -56,30 +72,36 @@ export class CreateProblemDto {
     example:
       'Guide discussion through symptom review, diagnostics, and escalation steps.',
   })
+  @ValidateIf((o) => !o.isDraft)
   @IsNotEmpty()
   instructorPlan: string;
 
   @ApiProperty({
     example: '1. Start aspirin and nitrates; 2. Activate cath lab...',
   })
+  @ValidateIf((o) => !o.isDraft)
   @IsNotEmpty()
   solutionKey: string;
 
   @ApiProperty({
     example: 'Summarize STEMI criteria and next steps for post-PCI care.',
   })
+  @ValidateIf((o) => !o.isDraft)
   @IsNotEmpty()
   wrapUp: string;
 
   @ApiProperty({ example: false })
+  @ValidateIf((o) => !o.isDraft)
   @IsNotEmpty()
   publishToInstitutionLibrary: boolean;
 
   @ApiProperty({ example: false })
+  @ValidateIf((o) => !o.isDraft)
   @IsNotEmpty()
   publishToPublicLibrary: boolean;
 
   @ApiProperty({ example: ['tag1', 'tag2', 'tag3'] })
+  @ValidateIf((o) => !o.isDraft)
   @IsArray()
   @ArrayMaxSize(2)
   @IsUUID('4', { each: true })
