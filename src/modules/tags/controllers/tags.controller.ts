@@ -7,8 +7,15 @@ import {
   Delete,
   UseGuards,
   Controller,
+  Query,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { CreateTagDto } from '../dto/create-tag.dto';
 import { UpdateTagDto } from '../dto/update-tag.dto';
@@ -40,6 +47,14 @@ export class TagsController {
   @Roles([Role.INSTITUTE_ADMIN, Role.INSTRUCTOR, Role.SUPER_ADMIN])
   findAll() {
     return this.tagsService.findAll();
+  }
+
+  @Get('search')
+  @ApiOperation({ summary: 'Search tags' })
+  @ApiQuery({ name: 'q', required: true, type: String })
+  @Roles([Role.INSTITUTE_ADMIN, Role.INSTRUCTOR, Role.SUPER_ADMIN])
+  search(@Query('q') query: string) {
+    return this.tagsService.search(query);
   }
 
   @Get(':id')
