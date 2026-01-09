@@ -10,6 +10,7 @@ import { CreateProblemData, Problem } from '../entities/problem.entity';
 import { Role } from '@common/enums/userRole';
 import { UsersService } from '@modules/user/services/users.service';
 import { CoursesService } from '@modules/courses/services/courses.service';
+import { Tag } from '@modules/tags/entities/tag.entity';
 
 @Injectable()
 export class ProblemsService {
@@ -229,5 +230,15 @@ export class ProblemsService {
       updatedBy: instructorId,
     });
     return await this.problemRepository.save(problemCopy);
+  }
+
+  async assignTagsToProblem(problemId: string, tags: Tag[]): Promise<void> {
+    for (const tag of tags) {
+      const problemTag = this.problemTagRepository.create({
+        problemId,
+        tagId: tag.id,
+      });
+      await this.problemTagRepository.save(problemTag);
+    }
   }
 }

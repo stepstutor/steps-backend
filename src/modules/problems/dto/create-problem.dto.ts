@@ -1,12 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
 import {
   ArrayMaxSize,
   IsArray,
   IsNotEmpty,
   IsOptional,
-  IsUUID,
   ValidateIf,
 } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateProblemDto {
   @ApiProperty({ example: 'Acute Myocardial Infarction Case' })
@@ -104,6 +103,5 @@ export class CreateProblemDto {
   @ValidateIf((o) => !o.isDraft)
   @IsArray()
   @ArrayMaxSize(2)
-  @IsUUID('4', { each: true })
   problemTags?: string[];
 }

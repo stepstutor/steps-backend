@@ -12,12 +12,14 @@ import { Role } from '@common/enums/userRole';
 import { PublicationType } from '@common/enums/publication-type';
 import { UsersService } from '@modules/user/services/users.service';
 import { createPaginatedResponse } from '@common/utils/pagination.util';
+import { TagsService } from '@modules/tags/services/tags.service';
 
 @Injectable()
 export class ProblemsManagerService {
   constructor(
     private readonly problemsService: ProblemsService,
     private readonly usersService: UsersService,
+    private readonly tagsService: TagsService,
   ) {}
 
   async getProblems(
@@ -102,6 +104,7 @@ export class ProblemsManagerService {
     const {
       publishToPublicLibrary,
       publishToInstitutionLibrary,
+      problemTags,
       ...problemData
     } = createProblemDto;
     const problem = await this.problemsService.create(
@@ -112,6 +115,11 @@ export class ProblemsManagerService {
       },
       authenticatedUserId,
     );
+    // Handle problemTags
+    if (problemTags && problemTags.length > 0) {
+      const tags = await this.tagsService.findOrCreateTagsByNames(problemTags);
+      await this.problemsService.assignTagsToProblem(problem.id, tags);
+    }
     if (publishToInstitutionLibrary) {
       // Publish to library
       this.problemsService.publishProblemToLibrary(

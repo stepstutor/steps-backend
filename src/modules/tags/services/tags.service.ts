@@ -76,4 +76,17 @@ export class TagsService {
       .limit(limit)
       .getMany();
   }
+
+  async findOrCreateTagsByNames(tagNames: string[]): Promise<Tag[]> {
+    const tags: Tag[] = [];
+    for (const name of tagNames) {
+      let tag = await this.tagRepository.findOne({ where: { name } });
+      if (!tag) {
+        tag = this.tagRepository.create({ name });
+        await this.tagRepository.save(tag);
+      }
+      tags.push(tag);
+    }
+    return tags;
+  }
 }
