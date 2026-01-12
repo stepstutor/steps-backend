@@ -1,5 +1,5 @@
 import { UUID } from 'crypto';
-import { IsNull } from 'typeorm';
+import { ILike, IsNull } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { ProblemsService } from './problems.service';
@@ -28,18 +28,24 @@ export class ProblemsManagerService {
     institutionId: string,
     query: GetProblemsQueryDto,
   ) {
-    const { libraryType } = query;
+    const { libraryType, discipline, instructorId, tagIds, title, isDraft } =
+      query;
     if (!libraryType && role === Role.INSTRUCTOR) {
       const [problems, total] = await this.problemsService.findAll(
         {
           instructorId: authenticatedUserId,
           courseId: IsNull(),
+          ...(title ? { title: ILike(`%${title}%`) } : {}),
+          ...(discipline ? { discipline: ILike(`%${discipline}%`) } : {}),
+          ...(instructorId ? { instructorId } : {}),
+          ...(typeof isDraft === 'boolean' ? { isDraft } : {}),
         },
         ['tags'],
         query.page,
         query.limit,
         query.sortBy,
         query.sortOrder,
+        tagIds,
       );
       const mappedProblems = await Promise.all(
         problems.map(async (problem) => ({
@@ -61,13 +67,25 @@ export class ProblemsManagerService {
       const [problems, total] =
         await this.problemsService.getProblemsByLibraryType(
           libraryType === 'PUBLIC' ? null : institutionId,
+          {
+            problem: {
+              instructorId: authenticatedUserId,
+              courseId: IsNull(),
+              ...(title ? { title: ILike(`%${title}%`) } : {}),
+              ...(discipline ? { discipline: ILike(`%${discipline}%`) } : {}),
+              ...(instructorId ? { instructorId } : {}),
+              ...(typeof isDraft === 'boolean' ? { isDraft } : {}),
+            },
+          },
           query.page,
           query.limit,
           query.sortBy,
           query.sortOrder,
+          tagIds,
         );
       const mappedProblems = await Promise.all(
         problems.map(async (problem) => {
+          const tags = await problem.tags;
           const lastModifiedBy = await this.usersService.findOne(
             problem.instructorId,
             true,
@@ -83,7 +101,7 @@ export class ProblemsManagerService {
             solutionKeyUploads: [],
             wrapUpUploads: [],
             problemTextUploads: [],
-            tags: [...(await problem.tags)],
+            tags: tags ? [...tags] : [],
           };
         }),
       );

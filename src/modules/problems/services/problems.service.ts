@@ -63,11 +63,17 @@ export class ProblemsService {
     limit?: number,
     sortBy?: string,
     sortOrder?: 'ASC' | 'DESC',
+    tagIds?: string[],
   ): Promise<[Problem[], number]> {
     const query = this.problemRepository.createQueryBuilder('problem');
 
     if (where) {
       query.where(where);
+    }
+    if (tagIds && tagIds.length > 0) {
+      query
+        .innerJoin('problem.tags', 'tag')
+        .andWhere('tag.id IN (:...tagIds)', { tagIds });
     }
     if (sortBy) {
       query.orderBy(`problem.${sortBy}`, sortOrder || 'ASC');
@@ -135,10 +141,12 @@ export class ProblemsService {
 
   async getProblemsByLibraryType(
     institutionId?: string | null,
+    where?: FindOptionsWhere<ProblemLibrary>,
     page?: number,
     limit?: number,
     sortBy?: string,
     sortOrder?: 'ASC' | 'DESC',
+    tagIds?: string[],
   ): Promise<[Problem[], number]> {
     const query = this.problemLibraryRepository
       .createQueryBuilder('problemLibrary')
@@ -149,6 +157,14 @@ export class ProblemsService {
       });
     } else {
       query.where('problemLibrary.institutionId IS NULL');
+    }
+    if (where) {
+      query.andWhere(where);
+    }
+    if (tagIds && tagIds.length > 0) {
+      query
+        .innerJoin('problem.tags', 'tag')
+        .andWhere('tag.id IN (:...tagIds)', { tagIds });
     }
     if (sortBy) {
       query.orderBy(`problem.${sortBy}`, sortOrder || 'ASC');
@@ -209,6 +225,14 @@ export class ProblemsService {
       createdBy: instructorId,
       updatedBy: instructorId,
     });
+    const oldProblemTags = await problem.tags;
+    for (const tag of oldProblemTags) {
+      const problemTag = this.problemTagRepository.create({
+        problemId: savedCopy.id,
+        tagId: tag.id,
+      });
+      await this.problemTagRepository.save(problemTag);
+    }
     return await this.problemLibraryRepository.save(problemLibraryEntry);
   }
 
