@@ -366,6 +366,7 @@ export class ProblemsManagerService {
         solutionKeyUploads: [],
         wrapUpUploads: [],
         problemTextUploads: [],
+        settings: await problem.courseProblemSettings,
         tags: [...(await problem.tags)],
       })),
     );
