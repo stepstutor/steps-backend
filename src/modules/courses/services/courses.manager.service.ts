@@ -30,6 +30,7 @@ import { UpdateCourseDto } from '../dto/updateCourseDto';
 import { GetCoursesQueryDto } from '../dto/getCoursesQuery.dto';
 import { CreateCourseDto, StudentDto } from '../dto/createCourse.dto';
 import { CourseInstructor } from '../entities/course-instructor.entity';
+import { AddProblemToCourseDto } from '../dto/add-problem-to-course.dto';
 
 @Injectable()
 export class CoursesManagerService {
@@ -60,17 +61,11 @@ export class CoursesManagerService {
     if (role === Role.INSTRUCTOR) {
       where = {
         ...where,
-        courseInstructors: {
-          instructorId: authenticatedUserId,
-        },
       };
     }
     if (role === Role.STUDENT) {
       where = {
         ...where,
-        courseStudents: {
-          studentId: authenticatedUserId,
-        },
       };
     }
     if (getCoursesQuery.isActive !== undefined) {
@@ -85,6 +80,8 @@ export class CoursesManagerService {
       limit,
       sortBy,
       sortOrder,
+      authenticatedUserId,
+      role,
     );
     // const coursesInstructors = await Promise.all(courses.map(course => course.courseInstructors));
     // const coursesStudents = await Promise.all(courses.map(course => course.courseStudents));
@@ -704,5 +701,40 @@ export class CoursesManagerService {
       }
       this.notificationQueue.addBulk(notificationObjs);
     }
+  }
+
+  async addProblemToCourse(
+    courseId: string,
+    problemId: string,
+    addProblemBody: AddProblemToCourseDto,
+    authenticatedUserId: UUID,
+    role: Role,
+    institutionId: string,
+  ) {
+    let where: FindOptionsWhere<Course> = {
+      institutionId,
+      id: courseId,
+    };
+
+    if (role === Role.INSTRUCTOR) {
+      where = {
+        ...where,
+        courseInstructors: {
+          instructorId: authenticatedUserId,
+          instructorType: InstructorType.MAIN,
+        },
+      };
+    }
+
+    const course = await this.coursesService.findOne(where);
+    if (!course) {
+      throw new BadRequestException();
+    }
+    return await this.coursesService.addProblemToCourse(
+      course,
+      problemId,
+      addProblemBody,
+      authenticatedUserId,
+    );
   }
 }

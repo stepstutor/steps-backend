@@ -13,11 +13,14 @@ import { PublicationType } from '@common/enums/publication-type';
 import { UsersService } from '@modules/user/services/users.service';
 import { createPaginatedResponse } from '@common/utils/pagination.util';
 import { TagsService } from '@modules/tags/services/tags.service';
+import { GetProblemsByCourseQueryDto } from '../dto/get-problems-by-course-query.dto';
+import { CoursesService } from '@modules/courses/services/courses.service';
 
 @Injectable()
 export class ProblemsManagerService {
   constructor(
     private readonly problemsService: ProblemsService,
+    private readonly coursesService: CoursesService,
     private readonly usersService: UsersService,
     private readonly tagsService: TagsService,
   ) {}
@@ -182,19 +185,25 @@ export class ProblemsManagerService {
     role: Omit<Role, 'STUDENT'>,
   ) {
     if (role === Role.INSTRUCTOR) {
-      const problem = await this.problemsService.findOne({
-        id: problemId,
-        instructorId: authenticatedUserId,
-      });
+      const problem = await this.problemsService.findOne(
+        {
+          id: problemId,
+          instructorId: authenticatedUserId,
+        },
+        ['tags'],
+      );
       if (!problem) {
         throw new BadRequestException('Problem not found or access denied');
       }
       return problem;
     } else {
-      const problem = await this.problemsService.findOne({
-        id: problemId,
-        instructorId: IsNull(),
-      });
+      const problem = await this.problemsService.findOne(
+        {
+          id: problemId,
+          instructorId: IsNull(),
+        },
+        ['tags'],
+      );
       if (!problem) {
         throw new BadRequestException('Problem not found or access denied');
       }
@@ -203,7 +212,10 @@ export class ProblemsManagerService {
           'Only library problems can be accessed by admins',
         );
       }
-      return problem;
+      return {
+        ...problem,
+        tags: [...(await problem.tags)],
+      };
     }
   }
 
@@ -323,5 +335,43 @@ export class ProblemsManagerService {
       problemId,
       authenticatedUserId,
     );
+  }
+
+  async getProblemsByCourse(
+    courseId: string,
+    institutionId: UUID,
+    queryParams: GetProblemsByCourseQueryDto,
+  ) {
+    const { page, limit, sortBy, sortOrder } = queryParams;
+    const course = await this.coursesService.findOne({
+      id: courseId,
+      institutionId,
+    });
+    if (!course) {
+      throw new BadRequestException('Course not found');
+    }
+    const [problems, total] = await this.problemsService.findAll(
+      {
+        courseId,
+        instructor: {
+          institutionId,
+        },
+      },
+      ['tags', 'courseProblemSettings'],
+      page,
+      limit,
+      sortBy,
+      sortOrder,
+    );
+    const mappedProblems = await Promise.all(
+      problems.map(async (problem) => ({
+        ...problem,
+        solutionKeyUploads: [],
+        wrapUpUploads: [],
+        problemTextUploads: [],
+        tags: [...(await problem.tags)],
+      })),
+    );
+    return createPaginatedResponse(mappedProblems, page, total, limit);
   }
 }

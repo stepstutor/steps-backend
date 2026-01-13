@@ -1,6 +1,11 @@
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { UUID } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Injectable, NotFoundException } from '@nestjs/common';
 import { FindOptionsWhere, IsNull, Not, Repository } from 'typeorm';
 
 import { ProblemTag } from '../entities/problem-tag.entity';
@@ -21,7 +26,9 @@ export class ProblemsService {
     private readonly problemLibraryRepository: Repository<ProblemLibrary>,
     @InjectRepository(ProblemTag)
     private readonly problemTagRepository: Repository<ProblemTag>,
+    @Inject(forwardRef(() => CoursesService))
     private readonly coursesService: CoursesService,
+    @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
   ) {}
 

@@ -34,6 +34,7 @@ import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
 import { InActiveUserGuard } from '@common/guards/inActiveUser.guard';
 import { SupabaseAuthGuard } from '@common/guards/supabase-auth.guard';
+import { GetProblemsByCourseQueryDto } from '../dto/get-problems-by-course-query.dto';
 
 @Controller('problems')
 @ApiTags('Problems')
@@ -65,6 +66,27 @@ export class ProblemsController {
     return this.problemsManager.getProblems(
       authenticatedUserId,
       role,
+      institutionId,
+      query,
+    );
+  }
+
+  @Get('/by-course/:courseId')
+  @ApiOperation({ summary: 'Get problems for course' })
+  @Roles([Role.INSTITUTE_ADMIN, Role.INSTRUCTOR, Role.SUPER_ADMIN])
+  @ApiParam({ name: 'courseId', description: 'ID of the course' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'sortBy', required: false })
+  @ApiQuery({ name: 'sortOrder', required: false, enum: ['ASC', 'DESC'] })
+  findAllByCourse(
+    @Param('courseId') courseId: string,
+    @Request() req,
+    @Query() query: GetProblemsByCourseQueryDto,
+  ) {
+    const { institutionId } = req.user;
+    return this.problemsManager.getProblemsByCourse(
+      courseId,
       institutionId,
       query,
     );

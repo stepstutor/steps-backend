@@ -4,6 +4,7 @@ import {
   Column,
   ManyToOne,
   OneToMany,
+  OneToOne,
   JoinColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -16,6 +17,7 @@ import { Institution } from '@modules/institutions/entities/institutions.entity'
 // **** Internal Imports ****
 import { CourseStudent } from './course-student.entity';
 import { CourseInstructor } from './course-instructor.entity';
+import { CourseProblemSettings } from './course-problem-settings.entity';
 
 @Entity()
 export class Course extends Base {
@@ -65,4 +67,10 @@ export class Course extends Base {
 
   @OneToMany(() => CourseStudent, (courseStudent) => courseStudent.course)
   courseStudents: Promise<CourseStudent[]>;
+
+  @OneToOne(
+    () => CourseProblemSettings,
+    (problemSettings) => problemSettings.course,
+  )
+  problemSettings: Promise<CourseProblemSettings | null>;
 }

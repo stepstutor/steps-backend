@@ -17,6 +17,8 @@ import { Course } from '@modules/courses/entities/course.entity';
 import { User } from '@modules/user/entities/user.entity';
 import { Tag } from '@modules/tags/entities/tag.entity';
 
+import { CourseProblemSettings } from '@modules/courses/entities/course-problem-settings.entity';
+
 import { ProblemTag } from './problem-tag.entity';
 import { ProblemLibrary } from './problem-library.entity';
 
@@ -95,6 +97,13 @@ export class Problem extends Base {
   @OneToOne(() => ProblemLibrary, (problemLibrary) => problemLibrary.problem)
   libraryEntry: Promise<ProblemLibrary | null>;
 
+  @OneToOne(
+    () => CourseProblemSettings,
+    (courseProblemSettings) => courseProblemSettings.problem,
+    { lazy: true },
+  )
+  courseProblemSettings: Promise<CourseProblemSettings | null>;
+
   @DeleteDateColumn({ type: 'timestamptz' })
   deletedAt?: Date;
 }
@@ -115,6 +124,7 @@ export type CreateProblemData = Required<
     | 'createdBy'
     | 'updatedBy'
     | 'problemTags' // !-- Exclude relations not needed when creating a Problem
+    | 'courseProblemSettings' // !-- Exclude relations not needed when creating a Problem
   >
 > &
   Partial<

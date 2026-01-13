@@ -1,19 +1,27 @@
 import {
+  Inject,
   Injectable,
+  forwardRef,
+  NotFoundException,
   BadRequestException,
   InternalServerErrorException,
-  forwardRef,
-  Inject,
 } from '@nestjs/common';
 import { UUID } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, FindOptionsWhere, In, Repository } from 'typeorm';
+import {
+  DataSource,
+  DeepPartial,
+  FindOptionsWhere,
+  In,
+  Repository,
+} from 'typeorm';
 
 import { Role } from '@common/enums/userRole';
 import { User } from '@modules/user/entities/user.entity';
 import { InstructorType } from '@common/enums/instructorType';
 import { UsersService } from '@modules/user/services/users.service';
 import { ReceiverGroup } from '@common/enums/notificationReceiverGroup';
+import { ProblemsService } from '@modules/problems/services/problems.service';
 import { InstitutionsService } from '@modules/institutions/institutions.service';
 import { Institution } from '@modules/institutions/entities/institutions.entity';
 import { UserWithInvitationLink } from '@modules/user/types/userWithInvitationLink';
@@ -22,6 +30,7 @@ import { Course } from '../entities/course.entity';
 import { StudentDto } from '../dto/createCourse.dto';
 import { CourseStudent } from '../entities/course-student.entity';
 import { CourseInstructor } from '../entities/course-instructor.entity';
+import { CourseProblemSettings } from '../entities/course-problem-settings.entity';
 
 @Injectable()
 export class CoursesService {
@@ -32,11 +41,15 @@ export class CoursesService {
     private courseStudentRepository: Repository<CourseStudent>,
     @InjectRepository(CourseInstructor)
     private courseInstructorRepository: Repository<CourseInstructor>,
+    @InjectRepository(CourseProblemSettings)
+    private courseProblemSettingsRepository: Repository<CourseProblemSettings>,
     private readonly dataSource: DataSource,
     @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
     @Inject(forwardRef(() => InstitutionsService))
     private readonly institutionService: InstitutionsService,
+    @Inject(forwardRef(() => ProblemsService))
+    private readonly problemsService: ProblemsService,
   ) {}
 
   async findAll(
@@ -45,10 +58,28 @@ export class CoursesService {
     limit?: number,
     sortBy?: string,
     sortOrder?: 'ASC' | 'DESC',
+    userId?: string,
+    role?: Role,
   ): Promise<[Course[], number]> {
     const query = this.courseRepository.createQueryBuilder('course');
     if (where) {
-      query.where;
+      query.where(where);
+    }
+    if (role === Role.INSTRUCTOR && userId) {
+      query.leftJoin(
+        'course.courseInstructors',
+        'courseInstructor',
+        'courseInstructor.instructorId = :userId',
+        { userId },
+      );
+    }
+    if (role === Role.STUDENT && userId) {
+      query.leftJoin(
+        'course.courseStudents',
+        'courseStudent',
+        'courseStudent.studentId = :userId',
+        { userId },
+      );
     }
     if (sortBy) {
       query.orderBy(`course.${sortBy}`, sortOrder || 'ASC');
@@ -452,5 +483,38 @@ export class CoursesService {
       subInstructors: await Promise.all(subInstructors),
       students: await Promise.all(students),
     };
+  }
+
+  async addProblemToCourse(
+    course: Course,
+    problemId: string,
+    addProblemBody: DeepPartial<CourseProblemSettings>,
+    authenticatedUserId: UUID,
+  ) {
+    const problem = await this.problemsService.findOne({ id: problemId });
+    if (!problem) {
+      throw new NotFoundException('Problem not found');
+    }
+    const tags = await problem.tags;
+    const { id: _, ...problemData } = problem;
+    const problemCopy = await this.problemsService.create(
+      {
+        ...problemData,
+        courseId: course.id,
+        problemTags: tags.map((tag) => tag.name),
+        createdBy: authenticatedUserId,
+        updatedBy: authenticatedUserId,
+      },
+      authenticatedUserId,
+    );
+    const courseProblemSettings = new CourseProblemSettings();
+    courseProblemSettings.courseId = course.id;
+    courseProblemSettings.problemId = problemCopy.id;
+    Object.assign(courseProblemSettings, addProblemBody);
+    await this.courseProblemSettingsRepository.save(courseProblemSettings);
+    return this.problemsService.findOne({ id: problemCopy.id }, [
+      'tags',
+      'courseProblemSettings',
+    ]);
   }
 }

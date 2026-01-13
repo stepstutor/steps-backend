@@ -12,7 +12,12 @@ import {
   UseGuards,
   Controller,
 } from '@nestjs/common';
-import { ApiOperation, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiBearerAuth,
+  ApiBody,
+  ApiParam,
+} from '@nestjs/swagger';
 
 // **** External Imports ****
 import { Role } from '@common/enums/userRole';
@@ -26,6 +31,7 @@ import { UpdateCourseDto } from '../dto/updateCourseDto';
 import { GetCoursesQueryDto } from '../dto/getCoursesQuery.dto';
 import { CreateCourseDto, StudentDto } from '../dto/createCourse.dto';
 import { CoursesManagerService } from '../services/courses.manager.service';
+import { AddProblemToCourseDto } from '../dto/add-problem-to-course.dto';
 
 @Controller('courses')
 export class CoursesController {
@@ -186,6 +192,31 @@ export class CoursesController {
       institutionId,
       firstName,
       lastName,
+    );
+  }
+
+  @Post(':courseId/problem/:problemId')
+  @ApiOperation({ summary: 'Add problem to a course' })
+  @ApiParam({ name: 'problemId', description: 'ID of the problem to add' })
+  @ApiParam({ name: 'courseId', description: 'ID of the course' })
+  @Roles([Role.INSTITUTE_ADMIN, Role.INSTRUCTOR])
+  @UseGuards(SupabaseAuthGuard, InActiveUserGuard, RolesGuard)
+  @ApiBearerAuth('access-token')
+  async addProblem(
+    @Param('courseId') courseId: string,
+    @Param('problemId') problemId: string,
+    @Request() req,
+    @Body() addProblemBody: AddProblemToCourseDto,
+  ) {
+    const { id: authenticatedUserId, role, institutionId } = req.user;
+
+    this.courseManagerService.addProblemToCourse(
+      courseId,
+      problemId,
+      addProblemBody,
+      authenticatedUserId,
+      role,
+      institutionId,
     );
   }
 
