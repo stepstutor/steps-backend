@@ -58,4 +58,11 @@ export class AddProblemToCourseDto {
   @IsOptional()
   @IsBoolean()
   isOptional?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Mark the problem as a draft within the course',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isDraft?: boolean;
 }

@@ -1,3 +1,4 @@
+import { In, DataSource, Repository, FindOptionsWhere } from 'typeorm';
 import {
   Inject,
   Injectable,
@@ -8,13 +9,6 @@ import {
 } from '@nestjs/common';
 import { UUID } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  DataSource,
-  DeepPartial,
-  FindOptionsWhere,
-  In,
-  Repository,
-} from 'typeorm';
 
 import { Role } from '@common/enums/userRole';
 import { User } from '@modules/user/entities/user.entity';
@@ -31,6 +25,7 @@ import { StudentDto } from '../dto/createCourse.dto';
 import { CourseStudent } from '../entities/course-student.entity';
 import { CourseInstructor } from '../entities/course-instructor.entity';
 import { CourseProblemSettings } from '../entities/course-problem-settings.entity';
+import { AddProblemToCourseDto } from '../dto/add-problem-to-course.dto';
 
 @Injectable()
 export class CoursesService {
@@ -488,9 +483,10 @@ export class CoursesService {
   async addProblemToCourse(
     course: Course,
     problemId: string,
-    addProblemBody: DeepPartial<CourseProblemSettings>,
+    addProblemBody: AddProblemToCourseDto,
     authenticatedUserId: UUID,
   ) {
+    const { isDraft, ...problemSettings } = addProblemBody;
     const problem = await this.problemsService.findOne({ id: problemId });
     if (!problem) {
       throw new NotFoundException('Problem not found');
@@ -504,13 +500,14 @@ export class CoursesService {
         problemTags: tags.map((tag) => tag.name),
         createdBy: authenticatedUserId,
         updatedBy: authenticatedUserId,
+        isDraft: isDraft ?? false,
       },
       authenticatedUserId,
     );
     const courseProblemSettings = new CourseProblemSettings();
     courseProblemSettings.courseId = course.id;
     courseProblemSettings.problemId = problemCopy.id;
-    Object.assign(courseProblemSettings, addProblemBody);
+    Object.assign(courseProblemSettings, problemSettings);
     await this.courseProblemSettingsRepository.save(courseProblemSettings);
     return this.problemsService.findOne({ id: problemCopy.id }, [
       'tags',
@@ -521,7 +518,7 @@ export class CoursesService {
   async updateProblemSettings(
     course: Course,
     problemId: string,
-    updateProblemBody: DeepPartial<CourseProblemSettings>,
+    updateProblemBody: AddProblemToCourseDto,
     authenticatedUserId: UUID,
   ) {
     const problem = await this.problemsService.findOne({ id: problemId }, [
@@ -530,6 +527,10 @@ export class CoursesService {
 
     if (problem.courseId !== course.id) {
       throw new BadRequestException('Problem does not belong to this course');
+    }
+
+    if (problem.isDraft && updateProblemBody.isDraft === false) {
+      await this.problemsService.update(problem.id, { isDraft: false });
     }
 
     const existingSettings = await this.courseProblemSettingsRepository.findOne(
