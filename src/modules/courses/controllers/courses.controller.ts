@@ -220,7 +220,7 @@ export class CoursesController {
     );
   }
 
-  @Put(':courseId/problem/:problemId/settings')
+  @Put(':courseId/problem/:problemId')
   @ApiOperation({ summary: 'Update course problem settings' })
   @ApiParam({ name: 'problemId', description: 'ID of the problem to update' })
   @ApiParam({ name: 'courseId', description: 'ID of the course' })
