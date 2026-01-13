@@ -220,6 +220,31 @@ export class CoursesController {
     );
   }
 
+  @Put(':courseId/problem/:problemId/settings')
+  @ApiOperation({ summary: 'Update course problem settings' })
+  @ApiParam({ name: 'problemId', description: 'ID of the problem to update' })
+  @ApiParam({ name: 'courseId', description: 'ID of the course' })
+  @Roles([Role.INSTITUTE_ADMIN, Role.INSTRUCTOR])
+  @UseGuards(SupabaseAuthGuard, InActiveUserGuard, RolesGuard)
+  @ApiBearerAuth('access-token')
+  async updateProblemSettings(
+    @Param('courseId') courseId: string,
+    @Param('problemId') problemId: string,
+    @Request() req,
+    @Body() updateProblemBody: AddProblemToCourseDto,
+  ) {
+    const { id: authenticatedUserId, role, institutionId } = req.user;
+
+    return this.courseManagerService.updateProblemSettings(
+      courseId,
+      problemId,
+      updateProblemBody,
+      authenticatedUserId,
+      role,
+      institutionId,
+    );
+  }
+
   @Delete(':courseId/students')
   @ApiOperation({ summary: 'Remove students from a course' })
   @Roles([Role.INSTITUTE_ADMIN, Role.INSTRUCTOR])

@@ -737,4 +737,40 @@ export class CoursesManagerService {
       authenticatedUserId,
     );
   }
+
+  async updateProblemSettings(
+    courseId: string,
+    problemId: string,
+    updateProblemBody: AddProblemToCourseDto,
+    authenticatedUserId: UUID,
+    role: Role,
+    institutionId: string,
+  ) {
+    let where: FindOptionsWhere<Course> = {
+      institutionId,
+      id: courseId,
+    };
+
+    if (role === Role.INSTRUCTOR) {
+      where = {
+        ...where,
+        courseInstructors: {
+          instructorId: authenticatedUserId,
+          instructorType: InstructorType.MAIN,
+        },
+      };
+    }
+
+    const course = await this.coursesService.findOne(where);
+    if (!course) {
+      throw new BadRequestException();
+    }
+
+    return this.coursesService.updateProblemSettings(
+      course,
+      problemId,
+      updateProblemBody,
+      authenticatedUserId,
+    );
+  }
 }

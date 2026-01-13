@@ -517,4 +517,44 @@ export class CoursesService {
       'courseProblemSettings',
     ]);
   }
+
+  async updateProblemSettings(
+    course: Course,
+    problemId: string,
+    updateProblemBody: DeepPartial<CourseProblemSettings>,
+    authenticatedUserId: UUID,
+  ) {
+    const problem = await this.problemsService.findOne({ id: problemId }, [
+      'courseProblemSettings',
+    ]);
+
+    if (problem.courseId !== course.id) {
+      throw new BadRequestException('Problem does not belong to this course');
+    }
+
+    const existingSettings = await this.courseProblemSettingsRepository.findOne(
+      {
+        where: { courseId: course.id, problemId },
+      },
+    );
+
+    if (!existingSettings) {
+      throw new NotFoundException('Course problem settings not found');
+    }
+
+    Object.entries(updateProblemBody).forEach(([key, value]) => {
+      if (value !== undefined) {
+        existingSettings[key] = value;
+      }
+    });
+
+    existingSettings.updatedBy = authenticatedUserId;
+
+    await this.courseProblemSettingsRepository.save(existingSettings);
+
+    return this.problemsService.findOne({ id: problemId }, [
+      'tags',
+      'courseProblemSettings',
+    ]);
+  }
 }
