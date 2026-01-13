@@ -199,7 +199,7 @@ export class CoursesController {
   @ApiOperation({ summary: 'Add problem to a course' })
   @ApiParam({ name: 'problemId', description: 'ID of the problem to add' })
   @ApiParam({ name: 'courseId', description: 'ID of the course' })
-  @Roles([Role.INSTITUTE_ADMIN, Role.INSTRUCTOR])
+  @Roles([Role.INSTRUCTOR])
   @UseGuards(SupabaseAuthGuard, InActiveUserGuard, RolesGuard)
   @ApiBearerAuth('access-token')
   async addProblem(
@@ -224,7 +224,7 @@ export class CoursesController {
   @ApiOperation({ summary: 'Update course problem settings' })
   @ApiParam({ name: 'problemId', description: 'ID of the problem to update' })
   @ApiParam({ name: 'courseId', description: 'ID of the course' })
-  @Roles([Role.INSTITUTE_ADMIN, Role.INSTRUCTOR])
+  @Roles([Role.INSTRUCTOR])
   @UseGuards(SupabaseAuthGuard, InActiveUserGuard, RolesGuard)
   @ApiBearerAuth('access-token')
   async updateProblemSettings(
