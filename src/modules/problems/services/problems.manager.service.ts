@@ -353,9 +353,6 @@ export class ProblemsManagerService {
     const [problems, total] = await this.problemsService.findAll(
       {
         courseId,
-        instructor: {
-          institutionId,
-        },
       },
       ['tags', 'courseProblemSettings'],
       page,
