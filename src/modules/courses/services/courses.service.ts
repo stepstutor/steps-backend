@@ -558,4 +558,12 @@ export class CoursesService {
       'courseProblemSettings',
     ]);
   }
+
+  async removeProblemFromCourse(course: Course, problemId: string) {
+    const problem = await this.problemsService.findOne({ id: problemId });
+    if (problem.courseId !== course.id) {
+      throw new BadRequestException('Problem does not belong to this course');
+    }
+    await this.problemsService.remove(problemId);
+  }
 }

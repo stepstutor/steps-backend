@@ -773,4 +773,30 @@ export class CoursesManagerService {
       authenticatedUserId,
     );
   }
+
+  async removeProblemFromCourse(
+    courseId: string,
+    problemId: string,
+    authenticatedUserId: UUID,
+    role: Role,
+    institutionId: string,
+  ) {
+    let where: FindOptionsWhere<Course> = {
+      institutionId,
+      id: courseId,
+    };
+    if (role === Role.INSTRUCTOR) {
+      where = {
+        ...where,
+        courseInstructors: {
+          instructorId: authenticatedUserId,
+        },
+      };
+    }
+    const course = await this.coursesService.findOne(where);
+    if (!course) {
+      throw new BadRequestException();
+    }
+    return this.coursesService.removeProblemFromCourse(course, problemId);
+  }
 }

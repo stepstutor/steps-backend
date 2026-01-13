@@ -245,6 +245,28 @@ export class CoursesController {
     );
   }
 
+  @Delete(':courseId/problem/:problemId')
+  @ApiOperation({ summary: 'Remove problem from a course' })
+  @ApiParam({ name: 'problemId', description: 'ID of the problem to remove' })
+  @ApiParam({ name: 'courseId', description: 'ID of the course' })
+  @Roles([Role.INSTRUCTOR])
+  @UseGuards(SupabaseAuthGuard, InActiveUserGuard, RolesGuard)
+  @ApiBearerAuth('access-token')
+  async removeProblem(
+    @Param('courseId') courseId: string,
+    @Param('problemId') problemId: string,
+    @Request() req,
+  ) {
+    const { id: authenticatedUserId, role, institutionId } = req.user;
+    this.courseManagerService.removeProblemFromCourse(
+      courseId,
+      problemId,
+      authenticatedUserId,
+      role,
+      institutionId,
+    );
+  }
+
   @Delete(':courseId/students')
   @ApiOperation({ summary: 'Remove students from a course' })
   @Roles([Role.INSTITUTE_ADMIN, Role.INSTRUCTOR])
