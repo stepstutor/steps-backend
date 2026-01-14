@@ -195,7 +195,13 @@ export class ProblemsManagerService {
       if (!problem) {
         throw new BadRequestException('Problem not found or access denied');
       }
-      return problem;
+      return {
+        ...problem,
+        tags: [...(await problem.tags)],
+        solutionKeyUploads: [],
+        wrapUpUploads: [],
+        problemTextUploads: [],
+      };
     } else {
       const problem = await this.problemsService.findOne(
         {
@@ -215,6 +221,9 @@ export class ProblemsManagerService {
       return {
         ...problem,
         tags: [...(await problem.tags)],
+        solutionKeyUploads: [],
+        wrapUpUploads: [],
+        problemTextUploads: [],
       };
     }
   }
