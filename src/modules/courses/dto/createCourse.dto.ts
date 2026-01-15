@@ -1,6 +1,6 @@
+import { Discipline } from '@common/enums/discipline';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional } from 'class-validator';
-import { StudentYear } from '@common/enums/studentYear';
+import { IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateCourseDto {
   @ApiProperty({ example: 'Course A' })
@@ -22,13 +22,14 @@ export class CreateCourseDto {
   @ApiProperty({ example: 'green' })
   courseColor: string;
 
-  @ApiProperty({ example: 'Medicine' })
+  @ApiProperty({ example: 'Organic Chemistry' })
   @IsNotEmpty()
-  programOfCourse: string;
+  courseType: string;
 
-  @IsOptional()
   @ApiProperty()
-  yearOfStudent: StudentYear;
+  @IsEnum(Discipline)
+  @IsNotEmpty()
+  discipline: Discipline;
 
   @IsOptional()
   @ApiProperty()

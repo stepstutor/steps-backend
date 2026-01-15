@@ -81,8 +81,8 @@ export class ProblemsService {
     }
     if (tagIds && tagIds.length > 0) {
       query
-        .innerJoin('problem.tags', 'tag')
-        .andWhere('tag.id IN (:...tagIds)', { tagIds });
+        .innerJoin('problem.problemTags', 'problemTag')
+        .andWhere('problemTag.tagId IN (:...tagIds)', { tagIds });
     }
     if (sortBy) {
       query.orderBy(`problem.${sortBy}`, sortOrder || 'ASC');
@@ -172,8 +172,8 @@ export class ProblemsService {
     }
     if (tagIds && tagIds.length > 0) {
       query
-        .innerJoin('problem.tags', 'tag')
-        .andWhere('tag.id IN (:...tagIds)', { tagIds });
+        .innerJoin('problem.problemTags', 'problemTag')
+        .andWhere('problemTag.tagId IN (:...tagIds)', { tagIds });
     }
     if (sortBy) {
       query.orderBy(`problem.${sortBy}`, sortOrder || 'ASC');

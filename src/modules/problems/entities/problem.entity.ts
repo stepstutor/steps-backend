@@ -113,7 +113,7 @@ export type CreateProblemData = Required<
     Problem,
     | 'courseId'
     | 'assumptions'
-    | 'tags'
+    // | 'tags'
     | 'deletedAt'
     | 'libraryEntry'
     | 'id'

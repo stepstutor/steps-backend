@@ -43,7 +43,7 @@ export class ProblemsManagerService {
           ...(instructorId ? { instructorId } : {}),
           ...(typeof isDraft === 'boolean' ? { isDraft } : {}),
         },
-        ['tags'],
+        [],
         query.page,
         query.limit,
         query.sortBy,
@@ -188,13 +188,10 @@ export class ProblemsManagerService {
     role: Omit<Role, 'STUDENT'>,
   ) {
     if (role === Role.INSTRUCTOR) {
-      const problem = await this.problemsService.findOne(
-        {
-          id: problemId,
-          instructorId: authenticatedUserId,
-        },
-        ['tags'],
-      );
+      const problem = await this.problemsService.findOne({
+        id: problemId,
+        instructorId: authenticatedUserId,
+      });
       if (!problem) {
         throw new BadRequestException('Problem not found or access denied');
       }
@@ -207,13 +204,10 @@ export class ProblemsManagerService {
         problemTextUploads: [],
       };
     } else {
-      const problem = await this.problemsService.findOne(
-        {
-          id: problemId,
-          instructorId: IsNull(),
-        },
-        ['tags'],
-      );
+      const problem = await this.problemsService.findOne({
+        id: problemId,
+        instructorId: IsNull(),
+      });
       if (!problem) {
         throw new BadRequestException('Problem not found or access denied');
       }
@@ -368,7 +362,7 @@ export class ProblemsManagerService {
       {
         courseId,
       },
-      ['tags', 'courseProblemSettings'],
+      ['courseProblemSettings'],
       page,
       limit,
       sortBy,

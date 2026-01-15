@@ -220,7 +220,6 @@ export class CoursesManagerService {
     const result = await this.coursesService.create(
       {
         ...rest,
-        yearOfStudent: rest.yearOfStudent || null,
         institutionId: institutionId,
         createdBy: authenticatedUserId,
         updatedBy: authenticatedUserId,

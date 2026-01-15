@@ -512,7 +512,6 @@ export class CoursesService {
     Object.assign(courseProblemSettings, problemSettings);
     await this.courseProblemSettingsRepository.save(courseProblemSettings);
     return this.problemsService.findOne({ id: problemCopy.id }, [
-      'tags',
       'courseProblemSettings',
     ]);
   }
@@ -556,7 +555,6 @@ export class CoursesService {
     await this.courseProblemSettingsRepository.save(existingSettings);
 
     return this.problemsService.findOne({ id: problemId }, [
-      'tags',
       'courseProblemSettings',
     ]);
   }
