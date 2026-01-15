@@ -3,9 +3,9 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
-  JoinTable,
+  // JoinTable,
   DeleteDateColumn,
-  ManyToMany,
+  // ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
   OneToOne,
@@ -15,7 +15,7 @@ import {
 import { Base } from '@common/entities/base.entity';
 import { Course } from '@modules/courses/entities/course.entity';
 import { User } from '@modules/user/entities/user.entity';
-import { Tag } from '@modules/tags/entities/tag.entity';
+// import { Tag } from '@modules/tags/entities/tag.entity';
 
 import { CourseProblemSettings } from '@modules/courses/entities/course-problem-settings.entity';
 
@@ -83,13 +83,13 @@ export class Problem extends Base {
   @JoinColumn({ name: 'instructorId' })
   instructor: User;
 
-  @ManyToMany(() => Tag, (tag) => tag.problems)
-  @JoinTable({
-    name: 'problem_tag',
-    joinColumn: { name: 'problemId', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'tagId', referencedColumnName: 'id' },
-  })
-  tags: Promise<Tag[]>;
+  // @ManyToMany(() => Tag, (tag) => tag.problems, {})
+  // @JoinTable({
+  //   name: 'problem_tag',
+  //   joinColumn: { name: 'problemId', referencedColumnName: 'id' },
+  //   inverseJoinColumn: { name: 'tagId', referencedColumnName: 'id' },
+  // })
+  // tags: Promise<Tag[]>;
 
   @OneToMany(() => ProblemTag, (problemTag) => problemTag.problem)
   problemTags: Promise<ProblemTag[]>;
@@ -132,7 +132,7 @@ export type CreateProblemData = Required<
       Problem,
       | 'courseId'
       | 'assumptions'
-      | 'tags'
+      // | 'tags'
       | 'deletedAt'
       | 'libraryEntry'
       | 'id'

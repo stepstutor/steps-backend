@@ -1,9 +1,9 @@
 import {
   Entity,
   Column,
-  OneToOne,
   JoinColumn,
   PrimaryGeneratedColumn,
+  OneToMany,
 } from 'typeorm';
 
 import { Course } from './course.entity';
@@ -42,13 +42,13 @@ export class CourseProblemSettings extends Base {
   @Column({ type: 'uuid', nullable: false })
   problemId: string;
 
-  @OneToOne(() => Course, (course) => course.problemSettings, {
+  @OneToMany(() => Course, (course) => course.problemSettings, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'courseId' })
   course: Promise<Course>;
 
-  @OneToOne(() => Problem, (problem) => problem.courseProblemSettings, {
+  @OneToMany(() => Problem, (problem) => problem.courseProblemSettings, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'problemId' })
