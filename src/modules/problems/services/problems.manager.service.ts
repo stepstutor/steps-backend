@@ -51,13 +51,16 @@ export class ProblemsManagerService {
         tagIds,
       );
       const mappedProblems = await Promise.all(
-        problems.map(async (problem) => ({
-          ...problem,
-          solutionKeyUploads: [],
-          wrapUpUploads: [],
-          problemTextUploads: [],
-          tags: [...(await problem.tags)],
-        })),
+        problems.map(async (problem) => {
+          const tags = await this.tagsService.extractTagsFromProblem(problem);
+          return {
+            ...problem,
+            solutionKeyUploads: [],
+            wrapUpUploads: [],
+            problemTextUploads: [],
+            tags: [...tags],
+          };
+        }),
       );
       return createPaginatedResponse(
         mappedProblems,
@@ -88,7 +91,7 @@ export class ProblemsManagerService {
         );
       const mappedProblems = await Promise.all(
         problems.map(async (problem) => {
-          const tags = await problem.tags;
+          const tags = await this.tagsService.extractTagsFromProblem(problem);
           const lastModifiedBy = await this.usersService.findOne(
             problem.instructorId,
             true,
@@ -195,9 +198,10 @@ export class ProblemsManagerService {
       if (!problem) {
         throw new BadRequestException('Problem not found or access denied');
       }
+      const tags = await this.tagsService.extractTagsFromProblem(problem);
       return {
         ...problem,
-        tags: [...(await problem.tags)],
+        tags: [...tags],
         solutionKeyUploads: [],
         wrapUpUploads: [],
         problemTextUploads: [],
@@ -218,9 +222,10 @@ export class ProblemsManagerService {
           'Only library problems can be accessed by admins',
         );
       }
+      const tags = await this.tagsService.extractTagsFromProblem(problem);
       return {
         ...problem,
-        tags: [...(await problem.tags)],
+        tags: [...tags],
         solutionKeyUploads: [],
         wrapUpUploads: [],
         problemTextUploads: [],
@@ -370,14 +375,17 @@ export class ProblemsManagerService {
       sortOrder,
     );
     const mappedProblems = await Promise.all(
-      problems.map(async (problem) => ({
-        ...problem,
-        solutionKeyUploads: [],
-        wrapUpUploads: [],
-        problemTextUploads: [],
-        settings: await problem.courseProblemSettings,
-        tags: [...(await problem.tags)],
-      })),
+      problems.map(async (problem) => {
+        const tags = await this.tagsService.extractTagsFromProblem(problem);
+        return {
+          ...problem,
+          solutionKeyUploads: [],
+          wrapUpUploads: [],
+          problemTextUploads: [],
+          settings: await problem.courseProblemSettings,
+          tags: [...tags],
+        };
+      }),
     );
     return createPaginatedResponse(mappedProblems, page, total, limit);
   }

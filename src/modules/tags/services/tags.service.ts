@@ -5,6 +5,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Tag } from '../entities/tag.entity';
 import { CreateTagDto } from '../dto/create-tag.dto';
 import { UpdateTagDto } from '../dto/update-tag.dto';
+import { Problem } from '@modules/problems/entities/problem.entity';
 
 @Injectable()
 export class TagsService {
@@ -87,6 +88,15 @@ export class TagsService {
       }
       tags.push(tag);
     }
+    return tags;
+  }
+
+  async extractTagsFromProblem(problem: Problem): Promise<Tag[]> {
+    const tags = await this.tagRepository
+      .createQueryBuilder('tag')
+      .innerJoin('tag.problemTags', 'problemTag')
+      .where('problemTag.problemId = :problemId', { problemId: problem.id })
+      .getMany();
     return tags;
   }
 }

@@ -13,6 +13,7 @@ import { CoursesController } from './controllers/courses.controller';
 import { CourseInstructor } from './entities/course-instructor.entity';
 import { CoursesManagerService } from './services/courses.manager.service';
 import { CourseProblemSettings } from './entities/course-problem-settings.entity';
+import { TagsModule } from '@modules/tags/tags.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { CourseProblemSettings } from './entities/course-problem-settings.entity
     forwardRef(() => CommonModule),
     forwardRef(() => ProblemsModule),
     InstitutionsModule,
+    TagsModule,
   ],
   controllers: [CoursesController],
   providers: [CoursesService, CoursesManagerService],

@@ -26,6 +26,7 @@ import { CourseStudent } from '../entities/course-student.entity';
 import { CourseInstructor } from '../entities/course-instructor.entity';
 import { CourseProblemSettings } from '../entities/course-problem-settings.entity';
 import { AddProblemToCourseDto } from '../dto/add-problem-to-course.dto';
+import { TagsService } from '@modules/tags/services/tags.service';
 
 @Injectable()
 export class CoursesService {
@@ -45,6 +46,7 @@ export class CoursesService {
     private readonly institutionService: InstitutionsService,
     @Inject(forwardRef(() => ProblemsService))
     private readonly problemsService: ProblemsService,
+    private readonly tagsService: TagsService,
   ) {}
 
   async findAll(
@@ -491,7 +493,7 @@ export class CoursesService {
     if (!problem) {
       throw new NotFoundException('Problem not found');
     }
-    const tags = await problem.tags;
+    const tags = await this.tagsService.extractTagsFromProblem(problem);
     const { id: _, ...problemData } = problem;
     const problemCopy = await this.problemsService.create(
       {

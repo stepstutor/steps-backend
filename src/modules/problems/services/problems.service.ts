@@ -16,6 +16,7 @@ import { Role } from '@common/enums/userRole';
 import { UsersService } from '@modules/user/services/users.service';
 import { CoursesService } from '@modules/courses/services/courses.service';
 import { Tag } from '@modules/tags/entities/tag.entity';
+import { TagsService } from '@modules/tags/services/tags.service';
 
 @Injectable()
 export class ProblemsService {
@@ -30,6 +31,7 @@ export class ProblemsService {
     private readonly coursesService: CoursesService,
     @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
+    private readonly tagsService: TagsService,
   ) {}
 
   async create(
@@ -232,7 +234,8 @@ export class ProblemsService {
       createdBy: instructorId,
       updatedBy: instructorId,
     });
-    const oldProblemTags = await problem.tags;
+    const oldProblemTags =
+      await this.tagsService.extractTagsFromProblem(problem);
     for (const tag of oldProblemTags) {
       const problemTag = this.problemTagRepository.create({
         problemId: savedCopy.id,
