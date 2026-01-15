@@ -97,12 +97,12 @@ export class Problem extends Base {
   @OneToOne(() => ProblemLibrary, (problemLibrary) => problemLibrary.problem)
   libraryEntry: Promise<ProblemLibrary | null>;
 
-  @OneToOne(
+  @OneToMany(
     () => CourseProblemSettings,
     (courseProblemSettings) => courseProblemSettings.problem,
     { lazy: true },
   )
-  courseProblemSettings: Promise<CourseProblemSettings | null>;
+  courseProblemSettings: Promise<CourseProblemSettings[]>;
 
   @DeleteDateColumn({ type: 'timestamptz' })
   deletedAt?: Date;
