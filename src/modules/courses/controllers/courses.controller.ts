@@ -210,7 +210,7 @@ export class CoursesController {
   ) {
     const { id: authenticatedUserId, role, institutionId } = req.user;
 
-    this.courseManagerService.addProblemToCourse(
+    return await this.courseManagerService.addProblemToCourse(
       courseId,
       problemId,
       addProblemBody,

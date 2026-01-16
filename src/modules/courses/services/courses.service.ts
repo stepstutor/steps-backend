@@ -511,7 +511,7 @@ export class CoursesService {
     courseProblemSettings.problemId = problemCopy.id;
     Object.assign(courseProblemSettings, problemSettings);
     await this.courseProblemSettingsRepository.save(courseProblemSettings);
-    return this.problemsService.findOne({ id: problemCopy.id }, [
+    return await this.problemsService.findOne({ id: problemCopy.id }, [
       'courseProblemSettings',
     ]);
   }
