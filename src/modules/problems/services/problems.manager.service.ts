@@ -365,7 +365,7 @@ export class ProblemsManagerService {
     institutionId: UUID,
     queryParams: GetProblemsByCourseQueryDto,
   ) {
-    const { page, limit, sortBy, sortOrder } = queryParams;
+    const { page, limit, sortBy, sortOrder, getPastDueProblems } = queryParams;
     const course = await this.coursesService.findOne({
       id: courseId,
       institutionId,
@@ -373,16 +373,29 @@ export class ProblemsManagerService {
     if (!course) {
       throw new BadRequestException('Course not found');
     }
-    const [problems, total] = await this.problemsService.findAll(
-      {
+    let problems: Problem[], total: number;
+    if (getPastDueProblems) {
+      [problems, total] = await this.problemsService.getPastDueProblemsByCourse(
         courseId,
-      },
-      ['courseProblemSettings'],
-      page,
-      limit,
-      sortBy,
-      sortOrder,
-    );
+        new Date(),
+        ['courseProblemSettings'],
+        page,
+        limit,
+        sortBy,
+        sortOrder,
+      );
+    } else {
+      [problems, total] = await this.problemsService.findAll(
+        {
+          courseId,
+        },
+        ['courseProblemSettings'],
+        page,
+        limit,
+        sortBy,
+        sortOrder,
+      );
+    }
     const mappedProblems = await Promise.all(
       problems.map(async (problem) => {
         const tags = await this.tagsService.extractTagsFromProblem(problem);

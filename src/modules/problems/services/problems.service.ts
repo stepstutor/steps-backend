@@ -330,4 +330,45 @@ export class ProblemsService {
       await this.problemTagRepository.save(problemTag);
     }
   }
+
+  async getPastDueProblemsByCourse(
+    courseId: string,
+    date: Date,
+    relations?: string[],
+    page?: number,
+    limit?: number,
+    sortBy?: string,
+    sortOrder?: 'ASC' | 'DESC',
+  ): Promise<[Problem[], number]> {
+    const query = this.problemRepository.createQueryBuilder('problem');
+    query.leftJoinAndSelect(
+      'problem.courseProblemSettings',
+      'courseProblemSettings',
+    );
+    query.where('problem.courseId = :courseId', { courseId });
+    query.andWhere(
+      `(
+      courseProblemSettings.reflectionDueDate IS NOT NULL
+      AND courseProblemSettings.reflectionDueDate <= :date
+      ) OR (
+      courseProblemSettings.reflectionDueDate IS NULL
+      AND courseProblemSettings.planningDueDate IS NOT NULL
+      AND courseProblemSettings.planningDueDate <= :date
+      )`,
+      { date },
+    );
+    if (sortBy) {
+      query.orderBy(`problem.${sortBy}`, sortOrder || 'ASC');
+    }
+    if (page && limit) {
+      query.skip((page - 1) * limit).take(limit);
+    }
+    if (relations && relations.length > 0) {
+      relations.forEach((relation) => {
+        relation !== 'courseProblemSettings' &&
+          query.leftJoinAndSelect(`problem.${relation}`, relation);
+      });
+    }
+    return await query.getManyAndCount();
+  }
 }
