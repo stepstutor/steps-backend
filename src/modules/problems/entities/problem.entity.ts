@@ -61,10 +61,10 @@ export class Problem extends Base {
   instructorPlan: string;
 
   @Column({ type: 'text', nullable: true })
-  solutionKey: string;
+  solutionKey: string | null;
 
   @Column({ type: 'text', nullable: true, default: null })
-  wrapUp: string;
+  wrapUp: string | null;
 
   @Column({ type: 'uuid', nullable: true, default: null })
   courseId: string;

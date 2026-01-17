@@ -17,6 +17,7 @@ import { UsersService } from '@modules/user/services/users.service';
 import { CoursesService } from '@modules/courses/services/courses.service';
 import { Tag } from '@modules/tags/entities/tag.entity';
 import { TagsService } from '@modules/tags/services/tags.service';
+import { UpdateProblemDto } from '../dto/update-problem.dto';
 
 @Injectable()
 export class ProblemsService {
@@ -35,7 +36,29 @@ export class ProblemsService {
   ) {}
 
   async create(
-    createProblemData: CreateProblemData & { problemTags?: string[] },
+    createProblemData: CreateProblemData & {
+      problemTags?: string[];
+      instructorId: string;
+      isDraft?: false;
+    },
+    authenticatedUserId: UUID,
+  ): Promise<Problem>;
+
+  async create(
+    createProblemData: UpdateProblemDto & {
+      problemTags?: string[];
+      instructorId: string;
+      isDraft?: true;
+    },
+    authenticatedUserId: UUID,
+  ): Promise<Problem>;
+
+  async create(
+    createProblemData: (CreateProblemData | UpdateProblemDto) & {
+      problemTags?: string[];
+      instructorId: string;
+      isDraft?: boolean;
+    },
     authenticatedUserId: UUID,
   ): Promise<Problem> {
     const instructor = this.usersService.findOne(
@@ -46,23 +69,49 @@ export class ProblemsService {
       throw new NotFoundException('Instructor not found');
     }
 
-    const { problemTags, ...problemData } = createProblemData;
+    const { problemTags: _, ...problemData } = createProblemData;
 
     const problem = this.problemRepository.create({
       ...problemData,
       createdBy: authenticatedUserId,
       updatedBy: authenticatedUserId,
     });
-    // Handle problemTags if needed
-    if (problemTags && problemTags.length > 0) {
-      problemTags.map((tagId) => {
-        const problemTag = this.problemTagRepository.create({
-          tagId,
-        });
-        return problemTag;
-      });
-    }
     return await this.problemRepository.save(problem);
+  }
+
+  async createCourseProblem(
+    problem: Problem,
+    courseId: string,
+    authenticatedUserId: UUID,
+    tags: Tag[],
+    asDraft?: boolean,
+  ): Promise<Problem> {
+    const {
+      id: _,
+      createdAt: _createdAt,
+      updatedAt: _updatedAt,
+      createdBy: _createdBy,
+      updatedBy: _updatedBy,
+      ...problemWithoutId
+    } = problem;
+    const duplicatedProblem = this.problemRepository.create({
+      ...problemWithoutId,
+      courseId,
+      createdBy: authenticatedUserId,
+      updatedBy: authenticatedUserId,
+      isDraft: !!asDraft,
+    });
+    if (tags && tags.length > 0) {
+      duplicatedProblem.problemTags = Promise.resolve(
+        tags.map((tag) => {
+          const problemTag = this.problemTagRepository.create({
+            tagId: tag.id,
+          });
+          return problemTag;
+        }),
+      );
+    }
+    return await this.problemRepository.save(duplicatedProblem);
   }
 
   async findAll(
@@ -111,15 +160,12 @@ export class ProblemsService {
 
   async update(
     id: string,
-    updateProblemDto: Partial<CreateProblemData & { problemTags?: string[] }>,
+    problemData: Partial<CreateProblemData>,
   ): Promise<Problem> {
     const problem = await this.findOne({ id });
-    if (
-      updateProblemDto.courseId &&
-      updateProblemDto.courseId !== problem.courseId
-    ) {
+    if (problemData.courseId && problemData.courseId !== problem.courseId) {
       const course = await this.coursesService.findOne({
-        id: updateProblemDto.courseId,
+        id: problemData.courseId,
       });
       if (!course) {
         throw new NotFoundException('Course not found');
@@ -127,18 +173,18 @@ export class ProblemsService {
     }
 
     if (
-      updateProblemDto.instructorId &&
-      updateProblemDto.instructorId !== problem.instructorId
+      problemData.instructorId &&
+      problemData.instructorId !== problem.instructorId
     ) {
       const instructor = await this.usersService.findOne(
-        updateProblemDto.instructorId,
+        problemData.instructorId,
       );
       if (!instructor) {
         throw new NotFoundException('Instructor not found');
       }
     }
 
-    Object.assign(problem, updateProblemDto);
+    Object.assign(problem, problemData);
     return await this.problemRepository.save(problem);
   }
 
@@ -266,7 +312,16 @@ export class ProblemsService {
     return await this.problemRepository.save(problemCopy);
   }
 
-  async assignTagsToProblem(problemId: string, tags: Tag[]): Promise<void> {
+  async assignTagsToProblem(
+    problemId: string,
+    tags: Tag[],
+    clearOld: boolean = true,
+  ): Promise<void> {
+    if (clearOld) {
+      this.problemTagRepository.delete({
+        problemId,
+      });
+    }
     for (const tag of tags) {
       const problemTag = this.problemTagRepository.create({
         problemId,

@@ -108,9 +108,9 @@ export class ProblemsController {
   @Post('/draft')
   @ApiOperation({ summary: 'Create problem' })
   @Roles([Role.INSTRUCTOR])
-  @ApiBody({ type: CreateProblemDto })
+  @ApiBody({ type: UpdateProblemDto })
   createDraftProblem(
-    @Body() createProblemDto: CreateProblemDto,
+    @Body() createProblemDto: UpdateProblemDto,
     @Request() req,
   ) {
     const { id: authenticatedUserId } = req.user;

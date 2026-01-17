@@ -15,6 +15,7 @@ import { createPaginatedResponse } from '@common/utils/pagination.util';
 import { TagsService } from '@modules/tags/services/tags.service';
 import { GetProblemsByCourseQueryDto } from '../dto/get-problems-by-course-query.dto';
 import { CoursesService } from '@modules/courses/services/courses.service';
+import { Problem } from '../entities/problem.entity';
 
 @Injectable()
 export class ProblemsManagerService {
@@ -163,7 +164,7 @@ export class ProblemsManagerService {
   }
 
   async createDraftProblem(
-    createProblemDto: CreateProblemDto,
+    createProblemDto: UpdateProblemDto,
     authenticatedUserId: UUID,
   ) {
     const {
@@ -233,6 +234,8 @@ export class ProblemsManagerService {
     authenticatedUserId: string,
     role: Omit<Role, 'STUDENT'>,
   ) {
+    const { problemTags, ...problemData } = updateProblemDto;
+    let updatedProblem: Problem;
     if (role === Role.INSTRUCTOR) {
       const problem = await this.problemsService.findOne({
         id: problemId,
@@ -241,7 +244,10 @@ export class ProblemsManagerService {
       if (!problem) {
         throw new BadRequestException('Problem not found or access denied');
       }
-      return this.problemsService.update(problemId, updateProblemDto);
+      updatedProblem = await this.problemsService.update(
+        problemId,
+        problemData,
+      );
     } else {
       const problem = await this.problemsService.findOne({
         id: problemId,
@@ -255,8 +261,17 @@ export class ProblemsManagerService {
           'Only library problems can be updated by admins',
         );
       }
-      return this.problemsService.update(problemId, updateProblemDto);
+      updatedProblem = await this.problemsService.update(
+        problemId,
+        updateProblemDto,
+      );
     }
+    // Handle problemTags
+    if (problemTags && problemTags.length > 0) {
+      const tags = await this.tagsService.findOrCreateTagsByNames(problemTags);
+      await this.problemsService.assignTagsToProblem(updatedProblem.id, tags);
+    }
+    return updatedProblem;
   }
 
   async deleteProblem(

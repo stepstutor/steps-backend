@@ -573,4 +573,20 @@ export class UsersService {
       };
     });
   }
+
+  async updateWalkthroughScreens(
+    userId: string,
+    walkthroughScreens: string,
+  ): Promise<User> {
+    const user = await this.findOne(userId, false, ['institution']);
+    if (!user) {
+      throw new BadRequestException('User not found.');
+    }
+
+    user.walkthroughScreens = [
+      ...(user.walkthroughScreens || []),
+      walkthroughScreens,
+    ];
+    return await this.usersRepository.save(user);
+  }
 }

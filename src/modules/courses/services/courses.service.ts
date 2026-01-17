@@ -27,6 +27,7 @@ import { CourseInstructor } from '../entities/course-instructor.entity';
 import { CourseProblemSettings } from '../entities/course-problem-settings.entity';
 import { AddProblemToCourseDto } from '../dto/add-problem-to-course.dto';
 import { TagsService } from '@modules/tags/services/tags.service';
+import { Problem } from '@modules/problems/entities/problem.entity';
 
 @Injectable()
 export class CoursesService {
@@ -494,17 +495,12 @@ export class CoursesService {
       throw new NotFoundException('Problem not found');
     }
     const tags = await this.tagsService.extractTagsFromProblem(problem);
-    const { id: _, ...problemData } = problem;
-    const problemCopy = await this.problemsService.create(
-      {
-        ...problemData,
-        courseId: course.id,
-        problemTags: tags.map((tag) => tag.name),
-        createdBy: authenticatedUserId,
-        updatedBy: authenticatedUserId,
-        isDraft: isDraft ?? false,
-      },
+    const problemCopy: Problem = await this.problemsService.createCourseProblem(
+      problem,
+      course.id,
       authenticatedUserId,
+      tags,
+      isDraft,
     );
     const courseProblemSettings = new CourseProblemSettings();
     courseProblemSettings.courseId = course.id;

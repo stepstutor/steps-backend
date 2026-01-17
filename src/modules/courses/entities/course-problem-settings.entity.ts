@@ -42,6 +42,9 @@ export class CourseProblemSettings extends Base {
   @Column({ type: 'uuid', nullable: false })
   problemId: string;
 
+  @Column({ nullable: false, default: false })
+  requireSolution: boolean;
+
   @ManyToOne(() => Course, (course) => course.problemSettings, {
     onDelete: 'CASCADE',
   })

@@ -65,4 +65,11 @@ export class AddProblemToCourseDto {
   @IsOptional()
   @IsBoolean()
   isDraft?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Require solution submission for the problem',
+  })
+  @IsOptional()
+  @IsBoolean()
+  requireSolution?: boolean;
 }
