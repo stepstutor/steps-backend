@@ -300,7 +300,7 @@ export class EmailService {
       <body>
         <div class="email-container">
           <div class="logo">
-            <img src="https://cmi-profile-pics.s3.amazonaws.com/07d95595-1bd1-4436-b942-09487ec2da3a-Property 1=horizontal.jpg" alt="Steps Tutor AI Logo"/>
+            <img src="https://png.pngtree.com/png-clipart/20190604/original/pngtree-creative-company-logo-png-image_1420804.jpg" alt="Steps Tutor AI Logo"/>
           </div>
           <div class="content">
             <h1>${this.i18n.translate('emailTemplates.sendInvitationEmail.heading', { lang })}</h1>
@@ -377,7 +377,7 @@ export class EmailService {
       <body>
         <div class="email-container">
           <div class="logo">
-            <img src="https://cmi-profile-pics.s3.amazonaws.com/07d95595-1bd1-4436-b942-09487ec2da3a-Property 1=horizontal.jpg" alt="Steps Tutor AI Logo"/>
+            <img src="https://png.pngtree.com/png-clipart/20190604/original/pngtree-creative-company-logo-png-image_1420804.jpg" alt="Steps Tutor AI Logo"/>
           </div>
           <div class="content">
             <h1>${this.i18n.translate('emailTemplates.sendWelcomeEmail.heading', { lang })}</h1>
@@ -391,12 +391,6 @@ export class EmailService {
       email,
       this.i18n.translate('emailTemplates.sendWelcomeEmail.subject', { lang }),
       content,
-      [
-        {
-          path: 'https://cmi-profile-pics.s3.amazonaws.com/32110782-2bd9-42ef-8ac7-6380cd420b11-Terms of Service Steps Tutor AI 2.25.25.pdf',
-          filename: 'Terms of Service.pdf',
-        },
-      ],
     );
   }
 
@@ -458,7 +452,7 @@ export class EmailService {
         <body>
           <div class="email-container">
             <div class="logo">
-              <img src="https://cmi-profile-pics.s3.amazonaws.com/07d95595-1bd1-4436-b942-09487ec2da3a-Property 1=horizontal.jpg" alt="Steps Tutor AI Logo">
+              <img src="https://png.pngtree.com/png-clipart/20190604/original/pngtree-creative-company-logo-png-image_1420804.jpg" alt="Steps Tutor AI Logo">
             </div>
             <div class="content">
               <h1>${announcementTitle}</h1>

@@ -1,0 +1,33 @@
+{
+  "sendCourseAssignNotificationEmailToStudent": {
+    "subject": "Welcome to {courseName}",
+    "body": "You were added by {inviterName} to this course and can now access the course on the platform.",
+    "buttonText": "Access course"
+  },
+  "sendCourseAssignNotificationEmailToInstructor": {
+    "subject": "You have been assigned as an instructor to {courseName}",
+    "heading": "Welcome to {courseName}",
+    "body": "You were added by {inviterName} as an instructor to this course and can now access the course on the platform.",
+    "buttonText": "Access course"
+  },
+  "sendInvitationEmail": {
+    "subject": "Invitation to Steps Tutor",
+    "heading": "Welcome to Steps Tutor!",
+    "body": "You have been invited to the platform. Click the button to register.",
+    "buttonText": "Register"
+  },
+  "sendWelcomeEmail": {
+    "subject": "Welcome to Steps Tutor!",
+    "heading": "Welcome to Steps Tutor!",
+    "body": "We're excited to have you join our community dedicated to advancing clinical reasoning skills.",
+    "attachmentInfo": "Attached to this email, you will find the terms of service for your reference. Please review them at your convenience, and feel free to reach out if you have any questions."
+  },
+  "sendDataEmail": {
+    "subject": "Data request for {dataName} - {date} - Steps Tutor",
+    "heading": "Data request for {dataName} - {date} - Steps Tutor",
+    "body": "Please find attached the requested data for your review. The data was requested on {date} and is related to {dataName}. This data was retrieved against the following filters:",
+    "attachmentInfo": "Attached to this email, you will find the terms of service for your reference. Please review them at your convenience, and feel free to reach out if you have any questions.",
+    "noFilters": "No filters were applied to this data request.",
+    "noData": "No data was found for the applied filters."
+  }
+}
