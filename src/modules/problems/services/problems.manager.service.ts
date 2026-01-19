@@ -16,6 +16,7 @@ import { TagsService } from '@modules/tags/services/tags.service';
 import { GetProblemsByCourseQueryDto } from '../dto/get-problems-by-course-query.dto';
 import { CoursesService } from '@modules/courses/services/courses.service';
 import { Problem } from '../entities/problem.entity';
+import { DraftProblemDto } from '../dto/draft-problem.dto';
 
 @Injectable()
 export class ProblemsManagerService {
@@ -130,6 +131,8 @@ export class ProblemsManagerService {
       publishToPublicLibrary,
       publishToInstitutionLibrary,
       problemTags,
+      includeSolutionKey,
+      includeWrapUp,
       ...problemData
     } = createProblemDto;
     const problem = await this.problemsService.create(
@@ -151,6 +154,8 @@ export class ProblemsManagerService {
         problem.id,
         publishToInstitutionLibrary ? institutionId : null,
         authenticatedUserId,
+        includeSolutionKey ? includeSolutionKey : false,
+        includeWrapUp ? includeWrapUp : false,
       );
     }
     if (publishToPublicLibrary) {
@@ -158,20 +163,39 @@ export class ProblemsManagerService {
         problem.id,
         null,
         authenticatedUserId,
+        includeSolutionKey ? includeSolutionKey : false,
+        includeWrapUp ? includeWrapUp : false,
       );
     }
     return problem;
   }
 
   async createDraftProblem(
-    createProblemDto: UpdateProblemDto,
+    createProblemDto: DraftProblemDto,
     authenticatedUserId: UUID,
   ) {
     const {
       publishToPublicLibrary: _,
       publishToInstitutionLibrary: __,
+      problemId,
+      problemTags,
       ...problemData
     } = createProblemDto;
+    const oldDraftProblem = problemId
+      ? await this.problemsService.findOne({
+          id: problemId,
+          instructorId: authenticatedUserId,
+          isDraft: true,
+        })
+      : null;
+    if (oldDraftProblem) {
+      // Update existing draft
+      const updatedDraft = await this.problemsService.update(
+        oldDraftProblem.id,
+        problemData,
+      );
+      return updatedDraft;
+    }
     const problem = await this.problemsService.create(
       {
         ...problemData,
@@ -180,6 +204,14 @@ export class ProblemsManagerService {
       },
       authenticatedUserId,
     );
+    // Handle problemTags
+    if (problemTags && problemTags.length > 0) {
+      const tags = await this.tagsService.findOrCreateTagsByNames(problemTags);
+      await this.problemsService.assignTagsToProblem(
+        problemId ?? problem.id,
+        tags,
+      );
+    }
     return problem;
   }
 
@@ -312,7 +344,8 @@ export class ProblemsManagerService {
     authenticatedUserId: UUID,
     institutionId: UUID | null,
   ) {
-    const { publicationType } = publishProblemDto;
+    const { publicationType, includeSolutionKey, includeWrapUp } =
+      publishProblemDto;
 
     const publisherId = authenticatedUserId;
 
@@ -331,6 +364,8 @@ export class ProblemsManagerService {
         problemId,
         targetInstitutionId,
         publisherId,
+        includeSolutionKey,
+        includeWrapUp,
       );
     }
 
@@ -339,6 +374,8 @@ export class ProblemsManagerService {
         problemId,
         null,
         publisherId,
+        includeSolutionKey,
+        includeWrapUp,
       );
     }
   }

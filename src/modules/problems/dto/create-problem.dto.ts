@@ -1,6 +1,7 @@
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsNotEmpty,
   IsOptional,
   ValidateIf,
@@ -86,6 +87,7 @@ export class CreateProblemDto {
     example: 'Summarize STEMI criteria and next steps for post-PCI care.',
   })
   @ValidateIf((o) => !o.isDraft)
+  @IsOptional()
   @IsNotEmpty()
   wrapUp: string;
 
@@ -104,4 +106,21 @@ export class CreateProblemDto {
   @IsArray()
   @ArrayMaxSize(2)
   problemTags?: string[];
+
+  @ApiProperty({
+    description: 'Whether to include solutions with the published problem',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  includeSolutionKey: boolean;
+
+  @ApiProperty({
+    description:
+      'Whether to include wrap-up section with the published problem',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  includeWrapUp: boolean;
 }

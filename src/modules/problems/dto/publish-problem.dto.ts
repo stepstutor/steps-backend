@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsString } from 'class-validator';
+import { IsBoolean, IsEnum, IsString } from 'class-validator';
 
 import { PublicationType } from '@common/enums/publication-type';
 
@@ -11,4 +11,19 @@ export class PublishProblemDto {
   @IsString()
   @IsEnum(PublicationType)
   publicationType: PublicationType;
+
+  @ApiProperty({
+    description: 'Whether to include solutions with the published problem',
+    example: true,
+  })
+  @IsBoolean()
+  includeSolutionKey: boolean;
+
+  @ApiProperty({
+    description:
+      'Whether to include wrap-up section with the published problem',
+    example: true,
+  })
+  @IsBoolean()
+  includeWrapUp: boolean;
 }

@@ -261,6 +261,8 @@ export class ProblemsService {
     id: string,
     institutionId: string | null,
     instructorId: UUID,
+    includeSolutionKey: boolean,
+    includeWrapUp: boolean,
   ): Promise<ProblemLibrary> {
     const problem = await this.findOne({ id });
     if (!problem) {
@@ -269,6 +271,9 @@ export class ProblemsService {
     const { id: _, ...problemWithoutId } = problem;
     const problemCopy = this.problemRepository.create({
       ...problemWithoutId,
+      solutionKey: includeSolutionKey ? problem.solutionKey : null,
+      wrapUp: includeWrapUp ? problem.wrapUp : null,
+      instructorId: instructorId,
       createdBy: instructorId,
       updatedBy: instructorId,
     });

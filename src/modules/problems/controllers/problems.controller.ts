@@ -35,6 +35,7 @@ import { Roles } from '@common/decorators/roles.decorator';
 import { InActiveUserGuard } from '@common/guards/inActiveUser.guard';
 import { SupabaseAuthGuard } from '@common/guards/supabase-auth.guard';
 import { GetProblemsByCourseQueryDto } from '../dto/get-problems-by-course-query.dto';
+import { DraftProblemDto } from '../dto/draft-problem.dto';
 
 @Controller('problems')
 @ApiTags('Problems')
@@ -106,11 +107,11 @@ export class ProblemsController {
   }
 
   @Post('/draft')
-  @ApiOperation({ summary: 'Create problem' })
+  @ApiOperation({ summary: 'Create draft problem' })
   @Roles([Role.INSTRUCTOR])
-  @ApiBody({ type: UpdateProblemDto })
+  @ApiBody({ type: DraftProblemDto })
   createDraftProblem(
-    @Body() createProblemDto: UpdateProblemDto,
+    @Body() createProblemDto: DraftProblemDto,
     @Request() req,
   ) {
     const { id: authenticatedUserId } = req.user;
