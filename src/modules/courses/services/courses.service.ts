@@ -64,7 +64,7 @@ export class CoursesService {
       query.where(where);
     }
     if (role === Role.INSTRUCTOR && userId) {
-      query.leftJoin(
+      query.innerJoin(
         'course.courseInstructors',
         'courseInstructor',
         'courseInstructor.instructorId = :userId',
@@ -72,7 +72,7 @@ export class CoursesService {
       );
     }
     if (role === Role.STUDENT && userId) {
-      query.leftJoin(
+      query.innerJoin(
         'course.courseStudents',
         'courseStudent',
         'courseStudent.studentId = :userId',

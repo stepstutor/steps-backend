@@ -51,6 +51,8 @@ export class ProblemsManagerService {
         query.sortBy,
         query.sortOrder,
         tagIds,
+        authenticatedUserId,
+        role,
       );
       const mappedProblems = await Promise.all(
         problems.map(async (problem) => {
@@ -77,7 +79,6 @@ export class ProblemsManagerService {
           libraryType === 'PUBLIC' ? null : institutionId,
           {
             problem: {
-              instructorId: authenticatedUserId,
               courseId: IsNull(),
               ...(title ? { title: ILike(`%${title}%`) } : {}),
               ...(discipline ? { discipline: ILike(`%${discipline}%`) } : {}),

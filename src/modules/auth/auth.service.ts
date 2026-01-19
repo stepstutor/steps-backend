@@ -19,7 +19,7 @@ export class AuthService {
         role,
         institutionId,
         isActive,
-        // walkthroughScreens,
+        walkthroughScreens,
       } = user;
       const {
         name: institutionName = '',
@@ -41,7 +41,7 @@ export class AuthService {
         country,
         isActive,
         isInstituteActive,
-        // walkthroughScreens,
+        walkthroughScreens,
         isVoiceCallAllowed,
       };
     }

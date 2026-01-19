@@ -122,6 +122,8 @@ export class ProblemsService {
     sortBy?: string,
     sortOrder?: 'ASC' | 'DESC',
     tagIds?: string[],
+    authenticatedUserId?: string,
+    role?: Omit<Role, Role.STUDENT>,
   ): Promise<[Problem[], number]> {
     const query = this.problemRepository.createQueryBuilder('problem');
 
@@ -132,6 +134,14 @@ export class ProblemsService {
       query
         .innerJoin('problem.problemTags', 'problemTag')
         .andWhere('problemTag.tagId IN (:...tagIds)', { tagIds });
+    }
+    if (role === Role.INSTRUCTOR && authenticatedUserId) {
+      query
+        .leftJoin('problem.libraryEntry', 'libraryEntry')
+        .andWhere('problem.instructorId = :instructorId', {
+          instructorId: authenticatedUserId,
+        })
+        .andWhere('libraryEntry.id IS NULL');
     }
     if (sortBy) {
       query.orderBy(`problem.${sortBy}`, sortOrder || 'ASC');
@@ -268,7 +278,12 @@ export class ProblemsService {
     if (!problem) {
       throw new NotFoundException('Problem not found');
     }
-    const { id: _, ...problemWithoutId } = problem;
+    const {
+      id: _,
+      createdAt: _createdAt,
+      updatedAt: _updatedAt,
+      ...problemWithoutId
+    } = problem;
     const problemCopy = this.problemRepository.create({
       ...problemWithoutId,
       solutionKey: includeSolutionKey ? problem.solutionKey : null,
@@ -308,13 +323,20 @@ export class ProblemsService {
     if (!libraryProblem || !(await libraryProblem.libraryEntry)) {
       throw new NotFoundException('Library problem not found');
     }
-    const { id: _, ...problemWithoutId } = libraryProblem;
+    const {
+      id: _,
+      createdAt: _createdAt,
+      updatedAt: _updatedAt,
+      ...problemWithoutId
+    } = libraryProblem;
     const problemCopy = this.problemRepository.create({
       ...problemWithoutId,
       instructorId: instructorId,
       createdBy: instructorId,
       updatedBy: instructorId,
     });
+    const tags = await this.tagsService.extractTagsFromProblem(libraryProblem);
+    await this.assignTagsToProblem(problemCopy.id, tags, false);
     return await this.problemRepository.save(problemCopy);
   }
 
