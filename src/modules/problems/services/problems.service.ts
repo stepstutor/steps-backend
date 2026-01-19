@@ -273,6 +273,7 @@ export class ProblemsService {
       ...problemWithoutId,
       solutionKey: includeSolutionKey ? problem.solutionKey : null,
       wrapUp: includeWrapUp ? problem.wrapUp : null,
+      isDraft: !includeSolutionKey ? true : problem.isDraft,
       instructorId: instructorId,
       createdBy: instructorId,
       updatedBy: instructorId,
