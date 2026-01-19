@@ -276,10 +276,10 @@ export class ProblemsManagerService {
       if (!problem) {
         throw new BadRequestException('Problem not found or access denied');
       }
-      updatedProblem = await this.problemsService.update(
-        problemId,
-        problemData,
-      );
+      updatedProblem = await this.problemsService.update(problemId, {
+        ...problemData,
+        isDraft: false,
+      });
     } else {
       const problem = await this.problemsService.findOne({
         id: problemId,
@@ -293,10 +293,10 @@ export class ProblemsManagerService {
           'Only library problems can be updated by admins',
         );
       }
-      updatedProblem = await this.problemsService.update(
-        problemId,
-        updateProblemDto,
-      );
+      updatedProblem = await this.problemsService.update(problemId, {
+        ...problemData,
+        isDraft: false,
+      });
     }
     // Handle problemTags
     if (problemTags && problemTags.length > 0) {
