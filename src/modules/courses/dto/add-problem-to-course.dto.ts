@@ -23,7 +23,7 @@ export class AddProblemToCourseDto {
   })
   @IsOptional()
   @IsDateString()
-  planningReleaseDate?: string;
+  planningReleaseDate?: string | null;
 
   @ApiPropertyOptional({
     description: 'Due date for the planning portion',
@@ -32,7 +32,7 @@ export class AddProblemToCourseDto {
   })
   @IsOptional()
   @IsDateString()
-  planningDueDate?: string;
+  planningDueDate?: string | null;
 
   @ApiPropertyOptional({
     description: 'Release date for the reflection portion',
@@ -41,7 +41,7 @@ export class AddProblemToCourseDto {
   })
   @IsOptional()
   @IsDateString()
-  reflectionReleaseDate?: string;
+  reflectionReleaseDate?: string | null;
 
   @ApiPropertyOptional({
     description: 'Due date for the reflection portion',
@@ -50,7 +50,7 @@ export class AddProblemToCourseDto {
   })
   @IsOptional()
   @IsDateString()
-  reflectionDueDate?: string;
+  reflectionDueDate?: string | null;
 
   @ApiPropertyOptional({
     description: 'Mark the reflection as optional for students',
