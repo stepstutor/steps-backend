@@ -9,7 +9,7 @@ export default new DataSource({
   username: process.env.DATABASE_USER!,
   password: process.env.DATABASE_PASSWORD!,
   database: process.env.DATABASE_DB!,
-  // schema: process.env.DATABASE_SCHEMA!,
+  schema: process.env.DATABASE_SCHEMA! || 'public',
   synchronize: false,
   dropSchema: false,
   logging: false,

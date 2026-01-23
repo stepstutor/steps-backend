@@ -189,22 +189,23 @@ export class ProblemsManagerService {
           isDraft: true,
         })
       : null;
+    let problem: Problem;
     if (oldDraftProblem) {
       // Update existing draft
-      const updatedDraft = await this.problemsService.update(
+      problem = await this.problemsService.update(
         oldDraftProblem.id,
         problemData,
       );
-      return updatedDraft;
+    } else {
+      problem = await this.problemsService.create(
+        {
+          ...problemData,
+          instructorId: authenticatedUserId,
+          isDraft: true,
+        },
+        authenticatedUserId,
+      );
     }
-    const problem = await this.problemsService.create(
-      {
-        ...problemData,
-        instructorId: authenticatedUserId,
-        isDraft: true,
-      },
-      authenticatedUserId,
-    );
     // Handle problemTags
     if (problemTags && problemTags.length > 0) {
       const tags = await this.tagsService.findOrCreateTagsByNames(problemTags);

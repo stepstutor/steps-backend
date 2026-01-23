@@ -327,6 +327,8 @@ export class ProblemsService {
       id: _,
       createdAt: _createdAt,
       updatedAt: _updatedAt,
+      problemTags: _problemTags,
+      libraryEntry: _libraryEntry,
       ...problemWithoutId
     } = libraryProblem;
     const problemCopy = this.problemRepository.create({
@@ -336,8 +338,9 @@ export class ProblemsService {
       updatedBy: instructorId,
     });
     const tags = await this.tagsService.extractTagsFromProblem(libraryProblem);
-    await this.assignTagsToProblem(problemCopy.id, tags, false);
-    return await this.problemRepository.save(problemCopy);
+    const savedProblem = await this.problemRepository.save(problemCopy);
+    await this.assignTagsToProblem(savedProblem.id, tags, false);
+    return savedProblem;
   }
 
   async assignTagsToProblem(
