@@ -3,20 +3,21 @@ import { ILike, IsNull } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { ProblemsService } from './problems.service';
+import { Problem } from '../entities/problem.entity';
+import { DraftProblemDto } from '../dto/draft-problem.dto';
 import { CreateProblemDto } from '../dto/create-problem.dto';
 import { UpdateProblemDto } from '../dto/update-problem.dto';
 import { PublishProblemDto } from '../dto/publish-problem.dto';
 import { GetProblemsQueryDto } from '../dto/get-problems-query.dto';
+import { GetProblemsByCourseQueryDto } from '../dto/get-problems-by-course-query.dto';
 
 import { Role } from '@common/enums/userRole';
+import { UploadType } from '@common/enums/upload-type';
 import { PublicationType } from '@common/enums/publication-type';
+import { TagsService } from '@modules/tags/services/tags.service';
 import { UsersService } from '@modules/user/services/users.service';
 import { createPaginatedResponse } from '@common/utils/pagination.util';
-import { TagsService } from '@modules/tags/services/tags.service';
-import { GetProblemsByCourseQueryDto } from '../dto/get-problems-by-course-query.dto';
 import { CoursesService } from '@modules/courses/services/courses.service';
-import { Problem } from '../entities/problem.entity';
-import { DraftProblemDto } from '../dto/draft-problem.dto';
 
 @Injectable()
 export class ProblemsManagerService {
@@ -134,6 +135,9 @@ export class ProblemsManagerService {
       problemTags,
       includeSolutionKey,
       includeWrapUp,
+      problemTextUploads,
+      solutionKeyUploads,
+      wrapUpUploads,
       ...problemData
     } = createProblemDto;
     const problem = await this.problemsService.create(
@@ -149,6 +153,14 @@ export class ProblemsManagerService {
       const tags = await this.tagsService.findOrCreateTagsByNames(problemTags);
       await this.problemsService.assignTagsToProblem(problem.id, tags);
     }
+    // Handle uploads (problem text, solution key, wrap-up)
+    await this.problemsService.addPoblemUploadsToProblem(
+      problem.id,
+      problemTextUploads || [],
+      solutionKeyUploads || [],
+      wrapUpUploads || [],
+    );
+    // Handle publication to libraries
     if (publishToInstitutionLibrary) {
       // Publish to library
       this.problemsService.publishProblemToLibrary(
@@ -223,26 +235,42 @@ export class ProblemsManagerService {
     role: Omit<Role, 'STUDENT'>,
   ) {
     if (role === Role.INSTRUCTOR) {
-      const problem = await this.problemsService.findOne({
-        id: problemId,
-        instructorId: authenticatedUserId,
-      });
+      const problem = await this.problemsService.findOne(
+        {
+          id: problemId,
+          instructorId: authenticatedUserId,
+        },
+        ['problemUploads'],
+      );
       if (!problem) {
         throw new BadRequestException('Problem not found or access denied');
       }
       const tags = await this.tagsService.extractTagsFromProblem(problem);
+      const solutionKeyUploads = problem.problemUploads.filter(
+        (upload) => upload.uploadType === UploadType.SOLUTION_KEY,
+      );
+      const wrapUpUploads = problem.problemUploads.filter(
+        (upload) => upload.uploadType === UploadType.WRAP_UP,
+      );
+      const problemTextUploads = problem.problemUploads.filter(
+        (upload) => upload.uploadType === UploadType.PROBLEM_TEXT,
+      );
       return {
         ...problem,
         tags: [...tags],
-        solutionKeyUploads: [],
-        wrapUpUploads: [],
-        problemTextUploads: [],
+        problemUploads: undefined,
+        solutionKeyUploads,
+        wrapUpUploads,
+        problemTextUploads,
       };
     } else {
-      const problem = await this.problemsService.findOne({
-        id: problemId,
-        instructorId: IsNull(),
-      });
+      const problem = await this.problemsService.findOne(
+        {
+          id: problemId,
+          instructorId: IsNull(),
+        },
+        ['problemUploads'],
+      );
       if (!problem) {
         throw new BadRequestException('Problem not found or access denied');
       }
@@ -251,13 +279,23 @@ export class ProblemsManagerService {
           'Only library problems can be accessed by admins',
         );
       }
+      const solutionKeyUploads = problem.problemUploads.filter(
+        (upload) => upload.uploadType === UploadType.SOLUTION_KEY,
+      );
+      const wrapUpUploads = problem.problemUploads.filter(
+        (upload) => upload.uploadType === UploadType.WRAP_UP,
+      );
+      const problemTextUploads = problem.problemUploads.filter(
+        (upload) => upload.uploadType === UploadType.PROBLEM_TEXT,
+      );
       const tags = await this.tagsService.extractTagsFromProblem(problem);
       return {
         ...problem,
         tags: [...tags],
-        solutionKeyUploads: [],
-        wrapUpUploads: [],
-        problemTextUploads: [],
+        problemUploads: undefined,
+        solutionKeyUploads,
+        wrapUpUploads,
+        problemTextUploads,
       };
     }
   }
@@ -268,7 +306,13 @@ export class ProblemsManagerService {
     authenticatedUserId: string,
     role: Omit<Role, 'STUDENT'>,
   ) {
-    const { problemTags, ...problemData } = updateProblemDto;
+    const {
+      problemTags,
+      problemTextUploads,
+      solutionKeyUploads,
+      wrapUpUploads,
+      ...problemData
+    } = updateProblemDto;
     let updatedProblem: Problem;
     if (role === Role.INSTRUCTOR) {
       const problem = await this.problemsService.findOne({
@@ -282,6 +326,14 @@ export class ProblemsManagerService {
         ...problemData,
         isDraft: false,
       });
+      // Handle uploads (problem text, solution key, wrap-up)
+      await this.problemsService.addPoblemUploadsToProblem(
+        updatedProblem.id,
+        problemTextUploads || [],
+        solutionKeyUploads || [],
+        wrapUpUploads || [],
+        true, // Remove existing uploads before adding new ones
+      );
     } else {
       const problem = await this.problemsService.findOne({
         id: problemId,
@@ -299,6 +351,14 @@ export class ProblemsManagerService {
         ...problemData,
         isDraft: false,
       });
+      // Handle uploads (problem text, solution key, wrap-up)
+      await this.problemsService.addPoblemUploadsToProblem(
+        updatedProblem.id,
+        problemTextUploads || [],
+        solutionKeyUploads || [],
+        wrapUpUploads || [],
+        true, // Remove existing uploads before adding new ones
+      );
     }
     // Handle problemTags
     if (problemTags && problemTags.length > 0) {

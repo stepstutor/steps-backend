@@ -1,10 +1,10 @@
 import {
-  ArrayMaxSize,
   IsArray,
   IsBoolean,
   IsNotEmpty,
   IsOptional,
   ValidateIf,
+  ArrayMaxSize,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -123,4 +123,28 @@ export class CreateProblemDto {
   @IsOptional()
   @IsBoolean()
   includeWrapUp: boolean;
+
+  @ApiProperty({
+    description: 'S3 URL(s) for problem text uploads',
+    example: [],
+  })
+  @IsOptional()
+  @IsArray()
+  problemTextUploads?: string[];
+
+  @ApiProperty({
+    description: 'S3 URL(s) for solution key uploads',
+    example: [],
+  })
+  @IsOptional()
+  @IsArray()
+  solutionKeyUploads?: string[];
+
+  @ApiProperty({
+    description: 'S3 URL(s) for wrap-up section uploads',
+    example: [],
+  })
+  @IsOptional()
+  @IsArray()
+  wrapUpUploads?: string[];
 }

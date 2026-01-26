@@ -1,23 +1,31 @@
 import {
-  forwardRef,
+  Not,
+  IsNull,
+  Repository,
+  DeepPartial,
+  FindOptionsWhere,
+} from 'typeorm';
+import {
   Inject,
+  forwardRef,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { UUID } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, IsNull, Not, Repository } from 'typeorm';
 
 import { ProblemTag } from '../entities/problem-tag.entity';
+import { UpdateProblemDto } from '../dto/update-problem.dto';
+import { ProblemUpload } from '../entities/problem-upload.entity';
 import { ProblemLibrary } from '../entities/problem-library.entity';
 import { CreateProblemData, Problem } from '../entities/problem.entity';
 
 import { Role } from '@common/enums/userRole';
-import { UsersService } from '@modules/user/services/users.service';
-import { CoursesService } from '@modules/courses/services/courses.service';
+import { UploadType } from '@common/enums/upload-type';
 import { Tag } from '@modules/tags/entities/tag.entity';
 import { TagsService } from '@modules/tags/services/tags.service';
-import { UpdateProblemDto } from '../dto/update-problem.dto';
+import { UsersService } from '@modules/user/services/users.service';
+import { CoursesService } from '@modules/courses/services/courses.service';
 
 @Injectable()
 export class ProblemsService {
@@ -28,6 +36,8 @@ export class ProblemsService {
     private readonly problemLibraryRepository: Repository<ProblemLibrary>,
     @InjectRepository(ProblemTag)
     private readonly problemTagRepository: Repository<ProblemTag>,
+    @InjectRepository(ProblemUpload)
+    private readonly problemUploadRepository: Repository<ProblemUpload>,
     @Inject(forwardRef(() => CoursesService))
     private readonly coursesService: CoursesService,
     @Inject(forwardRef(() => UsersService))
@@ -401,5 +411,42 @@ export class ProblemsService {
       });
     }
     return await query.getManyAndCount();
+  }
+
+  async addPoblemUploadsToProblem(
+    problemId: string,
+    problemTextUploads: string[],
+    solutionKeyUploads: string[],
+    wrapUpUploads: string[],
+    removeExisting: boolean = false,
+  ): Promise<void> {
+    const problem = await this.findOne({ id: problemId });
+    const uploads: DeepPartial<ProblemUpload>[] = [];
+    if (removeExisting) {
+      await this.problemUploadRepository.delete({ problemId: problem.id });
+    }
+    for (const filePath of problemTextUploads) {
+      uploads.push({
+        problemId: problem.id,
+        uploadType: UploadType.PROBLEM_TEXT,
+        url: filePath,
+      });
+    }
+    for (const filePath of solutionKeyUploads) {
+      uploads.push({
+        problemId: problem.id,
+        uploadType: UploadType.SOLUTION_KEY,
+        url: filePath,
+      });
+    }
+    for (const filePath of wrapUpUploads) {
+      uploads.push({
+        problemId: problem.id,
+        uploadType: UploadType.WRAP_UP,
+        url: filePath,
+      });
+    }
+    const createdUploads = this.problemUploadRepository.create(uploads);
+    await this.problemUploadRepository.save(createdUploads);
   }
 }

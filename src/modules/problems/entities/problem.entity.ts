@@ -1,25 +1,25 @@
 import {
+  Check,
   Entity,
   Column,
+  OneToOne,
   ManyToOne,
+  OneToMany,
   JoinColumn,
   // JoinTable,
-  DeleteDateColumn,
   // ManyToMany,
-  OneToMany,
+  DeleteDateColumn,
   PrimaryGeneratedColumn,
-  OneToOne,
-  Check,
 } from 'typeorm';
 
 import { Base } from '@common/entities/base.entity';
-import { Course } from '@modules/courses/entities/course.entity';
 import { User } from '@modules/user/entities/user.entity';
 // import { Tag } from '@modules/tags/entities/tag.entity';
-
+import { Course } from '@modules/courses/entities/course.entity';
 import { CourseProblemSettings } from '@modules/courses/entities/course-problem-settings.entity';
 
 import { ProblemTag } from './problem-tag.entity';
+import { ProblemUpload } from './problem-upload.entity';
 import { ProblemLibrary } from './problem-library.entity';
 
 @Entity()
@@ -104,6 +104,9 @@ export class Problem extends Base {
   )
   courseProblemSettings: Promise<CourseProblemSettings[]>;
 
+  @OneToMany(() => ProblemUpload, (problemUpload) => problemUpload.problem)
+  problemUploads: ProblemUpload[];
+
   @DeleteDateColumn({ type: 'timestamptz' })
   deletedAt?: Date;
 }
@@ -125,6 +128,7 @@ export type CreateProblemData = Required<
     | 'updatedBy'
     | 'problemTags' // !-- Exclude relations not needed when creating a Problem
     | 'courseProblemSettings' // !-- Exclude relations not needed when creating a Problem
+    | 'problemUploads' // !-- Exclude relations not needed when creating a Problem
   >
 > &
   Partial<
