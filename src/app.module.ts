@@ -16,6 +16,7 @@ import { QueriesModule } from '@modules/queries/queries.module';
 import { ArticlesModule } from '@modules/articles/articles.module';
 import { ProblemsModule } from '@modules/problems/problems.module';
 import { DashboardModule } from '@modules/dashboard/dashboard.module';
+import { CommonController } from '@common/controllers/common.controller';
 import { InvitationsModule } from '@modules/invitations/invitations.module';
 import { InstitutionsModule } from '@modules/institutions/institutions.module';
 import { NotificationsModule } from '@modules/notifications/notifications.module';
@@ -47,5 +48,6 @@ import { LogsAndTracksModule } from '@modules/logs-and-tracks/logs-and-tracks.mo
       useClass: ResponseInterceptor,
     },
   ],
+  controllers: [CommonController],
 })
 export class AppModule {}
