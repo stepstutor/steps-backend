@@ -490,7 +490,10 @@ export class CoursesService {
     authenticatedUserId: UUID,
   ) {
     const { isDraft, ...problemSettings } = addProblemBody;
-    const problem = await this.problemsService.findOne({ id: problemId });
+    const problem = await this.problemsService.findOne({
+      id: problemId,
+      isDraft: false,
+    });
     if (!problem) {
       throw new NotFoundException('Problem not found');
     }
@@ -503,9 +506,9 @@ export class CoursesService {
       isDraft,
     );
     const courseProblemSettings = new CourseProblemSettings();
+    Object.assign(courseProblemSettings, problemSettings);
     courseProblemSettings.courseId = course.id;
     courseProblemSettings.problemId = problemCopy.id;
-    Object.assign(courseProblemSettings, problemSettings);
     await this.courseProblemSettingsRepository.save(courseProblemSettings);
     return await this.problemsService.findOne({ id: problemCopy.id }, [
       'courseProblemSettings',
@@ -526,6 +529,7 @@ export class CoursesService {
       throw new BadRequestException('Problem does not belong to this course');
     }
 
+    // TODO: Change this to settings key isPublished once the problem entity is updated
     if (problem.isDraft && updateProblemBody.isDraft === false) {
       await this.problemsService.update(problem.id, { isDraft: false });
     }

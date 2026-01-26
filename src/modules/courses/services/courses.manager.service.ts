@@ -31,6 +31,7 @@ import { GetCoursesQueryDto } from '../dto/getCoursesQuery.dto';
 import { CreateCourseDto, StudentDto } from '../dto/createCourse.dto';
 import { CourseInstructor } from '../entities/course-instructor.entity';
 import { AddProblemToCourseDto } from '../dto/add-problem-to-course.dto';
+import { UpdateCourseProblemSettingsDto } from '../dto/update-problem-settings.dto';
 
 @Injectable()
 export class CoursesManagerService {
@@ -740,7 +741,7 @@ export class CoursesManagerService {
   async updateProblemSettings(
     courseId: string,
     problemId: string,
-    updateProblemBody: AddProblemToCourseDto,
+    updateProblemBody: UpdateCourseProblemSettingsDto,
     authenticatedUserId: UUID,
     role: Role,
     institutionId: string,
@@ -750,12 +751,21 @@ export class CoursesManagerService {
       id: courseId,
     };
 
+    if (updateProblemBody.hasPlanning === false) {
+      updateProblemBody.planningReleaseDate = null;
+      updateProblemBody.planningDueDate = null;
+      updateProblemBody.requireSolution = false;
+    }
+    if (updateProblemBody.hasReflection === false) {
+      updateProblemBody.reflectionReleaseDate = null;
+      updateProblemBody.reflectionDueDate = null;
+    }
+
     if (role === Role.INSTRUCTOR) {
       where = {
         ...where,
         courseInstructors: {
           instructorId: authenticatedUserId,
-          instructorType: InstructorType.MAIN,
         },
       };
     }

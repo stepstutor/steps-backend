@@ -1,5 +1,95 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsDateString, IsOptional } from 'class-validator';
+import {
+  Validate,
+  IsBoolean,
+  IsOptional,
+  IsDateString,
+  ValidationArguments,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+} from 'class-validator';
+
+@ValidatorConstraint({ name: 'PlanningDatesOrder', async: false })
+class PlanningDatesOrderConstraint implements ValidatorConstraintInterface {
+  validate(_: unknown, args: ValidationArguments): boolean {
+    const dto = args.object as AddProblemToCourseDto;
+
+    if (!dto.hasPlanning || dto.isOptional) {
+      return true;
+    }
+
+    if (!dto.planningReleaseDate || !dto.planningDueDate) {
+      return false;
+    }
+
+    const planningRelease = Date.parse(dto.planningReleaseDate);
+    const planningDue = Date.parse(dto.planningDueDate);
+
+    if (Number.isNaN(planningRelease) || Number.isNaN(planningDue)) {
+      return false;
+    }
+
+    return planningRelease < planningDue;
+  }
+
+  defaultMessage(): string {
+    return 'planningReleaseDate must be earlier than planningDueDate when planning is enabled';
+  }
+}
+
+@ValidatorConstraint({ name: 'ReflectionDatesOrder', async: false })
+class ReflectionDatesOrderConstraint implements ValidatorConstraintInterface {
+  validate(_: unknown, args: ValidationArguments): boolean {
+    const dto = args.object as AddProblemToCourseDto;
+
+    if (!dto.hasReflection || dto.isOptional) {
+      return true;
+    }
+
+    if (!dto.reflectionReleaseDate || !dto.reflectionDueDate) {
+      return false;
+    }
+
+    const reflectionRelease = Date.parse(dto.reflectionReleaseDate);
+    const reflectionDue = Date.parse(dto.reflectionDueDate);
+
+    if (Number.isNaN(reflectionRelease) || Number.isNaN(reflectionDue)) {
+      return false;
+    }
+
+    if (reflectionRelease >= reflectionDue) {
+      return false;
+    }
+
+    if (dto.hasPlanning) {
+      if (!dto.planningDueDate) {
+        return false;
+      }
+
+      const planningDue = Date.parse(dto.planningDueDate);
+
+      if (Number.isNaN(planningDue)) {
+        return false;
+      }
+
+      if (reflectionRelease < planningDue) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  defaultMessage(args: ValidationArguments): string {
+    const dto = args.object as AddProblemToCourseDto;
+
+    if (dto.hasPlanning) {
+      return 'reflectionReleaseDate must be earlier than reflectionDueDate and not earlier than planningDueDate when both workflows are enabled';
+    }
+
+    return 'reflectionReleaseDate must be earlier than reflectionDueDate when reflection is enabled';
+  }
+}
 
 export class AddProblemToCourseDto {
   @ApiPropertyOptional({
@@ -32,6 +122,7 @@ export class AddProblemToCourseDto {
   })
   @IsOptional()
   @IsDateString()
+  @Validate(PlanningDatesOrderConstraint)
   planningDueDate?: string | null;
 
   @ApiPropertyOptional({
@@ -50,6 +141,7 @@ export class AddProblemToCourseDto {
   })
   @IsOptional()
   @IsDateString()
+  @Validate(ReflectionDatesOrderConstraint)
   reflectionDueDate?: string | null;
 
   @ApiPropertyOptional({

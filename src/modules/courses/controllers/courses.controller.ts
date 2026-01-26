@@ -235,14 +235,6 @@ export class CoursesController {
   ) {
     const { id: authenticatedUserId, role, institutionId } = req.user;
 
-    if (updateProblemBody.hasPlanning === false) {
-      updateProblemBody.planningReleaseDate = null;
-      updateProblemBody.planningDueDate = null;
-    }
-    if (updateProblemBody.hasReflection === false) {
-      updateProblemBody.reflectionReleaseDate = null;
-      updateProblemBody.reflectionDueDate = null;
-    }
     return this.courseManagerService.updateProblemSettings(
       courseId,
       problemId,
