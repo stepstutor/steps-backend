@@ -1,5 +1,5 @@
 import { UUID } from 'crypto';
-import { ILike, IsNull } from 'typeorm';
+import { Equal, ILike, IsNull, Or } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { ProblemsService } from './problems.service';
@@ -233,15 +233,26 @@ export class ProblemsManagerService {
     problemId: string,
     authenticatedUserId: string,
     role: Omit<Role, 'STUDENT'>,
+    institutionId: string,
   ) {
     if (role === Role.INSTRUCTOR) {
       const problem = await this.problemsService.findOne(
         {
           id: problemId,
-          instructorId: authenticatedUserId,
+          instructorId: Or(Equal(authenticatedUserId), IsNull()),
         },
         ['problemUploads'],
       );
+      if (problem.instructorId === null) {
+        const libraryEntry = await problem.libraryEntry;
+        if (
+          !libraryEntry ||
+          (libraryEntry.institutionId !== null &&
+            libraryEntry.institutionId !== institutionId)
+        ) {
+          throw new BadRequestException('Problem not found or access denied');
+        }
+      }
       if (!problem) {
         throw new BadRequestException('Problem not found or access denied');
       }

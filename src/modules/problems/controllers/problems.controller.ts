@@ -123,10 +123,15 @@ export class ProblemsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get problem by id' })
-  @Roles([Role.INSTITUTE_ADMIN, Role.INSTRUCTOR, Role.SUPER_ADMIN])
+  @Roles([Role.INSTITUTE_ADMIN, Role.INSTRUCTOR])
   findOne(@Param('id') id: string, @Request() req) {
-    const { id: authenticatedUserId, role } = req.user;
-    return this.problemsManager.getProblemById(id, authenticatedUserId, role);
+    const { id: authenticatedUserId, role, institutionId } = req.user;
+    return this.problemsManager.getProblemById(
+      id,
+      authenticatedUserId,
+      role,
+      institutionId,
+    );
   }
 
   @Patch(':id')
