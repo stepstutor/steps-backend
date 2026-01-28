@@ -5,8 +5,29 @@ import {
   IsOptional,
   ValidateIf,
   ArrayMaxSize,
+  IsUrl,
+  IsString,
+  IsEnum,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { MEDIA } from '@common/enums/mediaType';
+import { Type } from 'class-transformer';
+
+export class MediaItemDto {
+  @ApiProperty({ example: 'https://s3.amazonaws.com/bucket/path/to/file.pdf' })
+  @IsUrl()
+  url: string;
+
+  @ApiProperty({ example: 'STEMI Case Overview' })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiProperty({ enum: MEDIA, example: MEDIA.DOCUMENT })
+  @IsEnum(MEDIA)
+  type: MEDIA;
+}
 
 export class CreateProblemDto {
   @ApiProperty({ example: 'Acute Myocardial Infarction Case' })
@@ -126,25 +147,50 @@ export class CreateProblemDto {
 
   @ApiProperty({
     description: 'S3 URL(s) for problem text uploads',
-    example: [],
+    example: [
+      {
+        url: 'https://s3.amazonaws.com/bucket/problem-text.pdf',
+        name: 'Problem Text',
+        type: 'DOCUMENT',
+      },
+    ],
+    type: [MediaItemDto],
   })
   @IsOptional()
   @IsArray()
-  problemTextUploads?: string[];
+  @ValidateNested({ each: true })
+  @Type(() => MediaItemDto)
+  problemTextUploads?: MediaItemDto[];
 
   @ApiProperty({
     description: 'S3 URL(s) for solution key uploads',
-    example: [],
+    example: [
+      {
+        url: 'https://s3.amazonaws.com/bucket/solution-key.pdf',
+        name: 'Solution Key',
+        type: 'DOCUMENT',
+      },
+    ],
   })
   @IsOptional()
   @IsArray()
-  solutionKeyUploads?: string[];
+  @ValidateNested({ each: true })
+  @Type(() => MediaItemDto)
+  solutionKeyUploads?: MediaItemDto[];
 
   @ApiProperty({
     description: 'S3 URL(s) for wrap-up section uploads',
-    example: [],
+    example: [
+      {
+        url: 'https://s3.amazonaws.com/bucket/wrap-up.pdf',
+        name: 'Wrap-Up',
+        type: 'DOCUMENT',
+      },
+    ],
   })
   @IsOptional()
   @IsArray()
-  wrapUpUploads?: string[];
+  @ValidateNested({ each: true })
+  @Type(() => MediaItemDto)
+  wrapUpUploads?: MediaItemDto[];
 }

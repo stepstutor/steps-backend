@@ -10,6 +10,7 @@ import { Base } from '@common/entities/base.entity';
 import { UploadType } from '@common/enums/upload-type';
 
 import { Problem } from './problem.entity';
+import { MEDIA } from '@common/enums/mediaType';
 
 @Entity('problem_uploads')
 export class ProblemUpload extends Base {
@@ -27,6 +28,12 @@ export class ProblemUpload extends Base {
 
   @Column({ type: 'text' })
   url: string;
+
+  @Column()
+  name: string;
+
+  @Column({ type: 'enum', enum: MEDIA })
+  type: MEDIA;
 
   @Column({ type: 'enum', enum: UploadType })
   uploadType: UploadType;

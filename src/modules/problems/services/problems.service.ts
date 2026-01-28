@@ -26,6 +26,7 @@ import { Tag } from '@modules/tags/entities/tag.entity';
 import { TagsService } from '@modules/tags/services/tags.service';
 import { UsersService } from '@modules/user/services/users.service';
 import { CoursesService } from '@modules/courses/services/courses.service';
+import { MediaItemDto } from '../dto/create-problem.dto';
 
 @Injectable()
 export class ProblemsService {
@@ -413,11 +414,11 @@ export class ProblemsService {
     return await query.getManyAndCount();
   }
 
-  async addPoblemUploadsToProblem(
+  async addProblemUploadsToProblem(
     problemId: string,
-    problemTextUploads: string[],
-    solutionKeyUploads: string[],
-    wrapUpUploads: string[],
+    problemTextUploads: MediaItemDto[],
+    solutionKeyUploads: MediaItemDto[],
+    wrapUpUploads: MediaItemDto[],
     removeExisting: boolean = false,
   ): Promise<void> {
     const problem = await this.findOne({ id: problemId });
@@ -429,21 +430,27 @@ export class ProblemsService {
       uploads.push({
         problemId: problem.id,
         uploadType: UploadType.PROBLEM_TEXT,
-        url: filePath,
+        url: filePath.url,
+        name: filePath.name,
+        type: filePath.type,
       });
     }
     for (const filePath of solutionKeyUploads) {
       uploads.push({
         problemId: problem.id,
         uploadType: UploadType.SOLUTION_KEY,
-        url: filePath,
+        url: filePath.url,
+        name: filePath.name,
+        type: filePath.type,
       });
     }
     for (const filePath of wrapUpUploads) {
       uploads.push({
         problemId: problem.id,
         uploadType: UploadType.WRAP_UP,
-        url: filePath,
+        url: filePath.url,
+        name: filePath.name,
+        type: filePath.type,
       });
     }
     const createdUploads = this.problemUploadRepository.create(uploads);

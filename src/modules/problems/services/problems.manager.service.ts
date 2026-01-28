@@ -154,7 +154,7 @@ export class ProblemsManagerService {
       await this.problemsService.assignTagsToProblem(problem.id, tags);
     }
     // Handle uploads (problem text, solution key, wrap-up)
-    await this.problemsService.addPoblemUploadsToProblem(
+    await this.problemsService.addProblemUploadsToProblem(
       problem.id,
       problemTextUploads || [],
       solutionKeyUploads || [],
@@ -192,6 +192,9 @@ export class ProblemsManagerService {
       publishToInstitutionLibrary: __,
       problemId,
       problemTags,
+      problemTextUploads,
+      solutionKeyUploads,
+      wrapUpUploads,
       ...problemData
     } = createProblemDto;
     const oldDraftProblem = problemId
@@ -226,6 +229,14 @@ export class ProblemsManagerService {
         tags,
       );
     }
+    // Handle uploads (problem text, solution key, wrap-up)
+    await this.problemsService.addProblemUploadsToProblem(
+      problem.id,
+      problemTextUploads || [],
+      solutionKeyUploads || [],
+      wrapUpUploads || [],
+      true, // Remove existing uploads before adding new ones
+    );
     return problem;
   }
 
@@ -338,7 +349,7 @@ export class ProblemsManagerService {
         isDraft: false,
       });
       // Handle uploads (problem text, solution key, wrap-up)
-      await this.problemsService.addPoblemUploadsToProblem(
+      await this.problemsService.addProblemUploadsToProblem(
         updatedProblem.id,
         problemTextUploads || [],
         solutionKeyUploads || [],
@@ -363,7 +374,7 @@ export class ProblemsManagerService {
         isDraft: false,
       });
       // Handle uploads (problem text, solution key, wrap-up)
-      await this.problemsService.addPoblemUploadsToProblem(
+      await this.problemsService.addProblemUploadsToProblem(
         updatedProblem.id,
         problemTextUploads || [],
         solutionKeyUploads || [],
