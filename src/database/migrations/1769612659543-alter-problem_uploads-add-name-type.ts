@@ -5,23 +5,23 @@ export class AlterProblemUploadsAddNameAndType1769612659543 implements Migration
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `ALTER TABLE "steps_db"."problem_uploads" ADD "name" character varying NOT NULL`,
+      `ALTER TABLE "public"."problem_uploads" ADD "name" character varying NOT NULL`,
     );
     await queryRunner.query(
-      `CREATE TYPE "steps_db"."problem_uploads_type_enum" AS ENUM('IMAGE', 'VIDEO', 'AUDIO', 'DOCUMENT', 'YOUTUBE')`,
+      `CREATE TYPE "public"."problem_uploads_type_enum" AS ENUM('IMAGE', 'VIDEO', 'AUDIO', 'DOCUMENT', 'YOUTUBE')`,
     );
     await queryRunner.query(
-      `ALTER TABLE "steps_db"."problem_uploads" ADD "type" "steps_db"."problem_uploads_type_enum" NOT NULL`,
+      `ALTER TABLE "public"."problem_uploads" ADD "type" "public"."problem_uploads_type_enum" NOT NULL`,
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `ALTER TABLE "steps_db"."problem_uploads" DROP COLUMN "type"`,
+      `ALTER TABLE "public"."problem_uploads" DROP COLUMN "type"`,
     );
-    await queryRunner.query(`DROP TYPE "steps_db"."problem_uploads_type_enum"`);
+    await queryRunner.query(`DROP TYPE "public"."problem_uploads_type_enum"`);
     await queryRunner.query(
-      `ALTER TABLE "steps_db"."problem_uploads" DROP COLUMN "name"`,
+      `ALTER TABLE "public"."problem_uploads" DROP COLUMN "name"`,
     );
   }
 }
