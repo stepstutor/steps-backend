@@ -578,7 +578,7 @@ export class ProblemsManagerService {
   async cowriteSolutionKey(
     cowriteSolutionDto: CowriteSolutionDto,
     authenticatedUserId: UUID,
-  ): Promise<string> {
+  ): Promise<{ solutionKey: string }> {
     const _user = await this.usersService.findOne(authenticatedUserId, false, [
       'institution',
     ]);
@@ -618,6 +618,6 @@ export class ProblemsManagerService {
       additionalInformation,
       instructorPlan,
     );
-    return response;
+    return { solutionKey: response };
   }
 }
