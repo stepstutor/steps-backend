@@ -72,6 +72,12 @@ export class Problem extends Base {
   @Column({ default: false })
   isDraft: boolean;
 
+  @Column({ default: 0 })
+  cowriteProblemAttempts: number;
+
+  @Column({ default: 0 })
+  cowriteSolutionAttempts: number;
+
   @ManyToOne(() => Course, { nullable: true })
   @JoinColumn({ name: 'courseId' })
   course: Course;

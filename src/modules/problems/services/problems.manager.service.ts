@@ -2,10 +2,13 @@ import { UUID } from 'crypto';
 import { Equal, ILike, IsNull, Or } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
+import {
+  CreateProblemDto,
+  CowriteProblemResponse,
+} from '../dto/create-problem.dto';
 import { ProblemsService } from './problems.service';
 import { Problem } from '../entities/problem.entity';
 import { DraftProblemDto } from '../dto/draft-problem.dto';
-import { CreateProblemDto } from '../dto/create-problem.dto';
 import { UpdateProblemDto } from '../dto/update-problem.dto';
 import { PublishProblemDto } from '../dto/publish-problem.dto';
 import { GetProblemsQueryDto } from '../dto/get-problems-query.dto';
@@ -18,6 +21,9 @@ import { TagsService } from '@modules/tags/services/tags.service';
 import { UsersService } from '@modules/user/services/users.service';
 import { createPaginatedResponse } from '@common/utils/pagination.util';
 import { CoursesService } from '@modules/courses/services/courses.service';
+import { AIService } from '@modules/ai/services/ai.service';
+import { CowriteProblemDto } from '../dto/cowrite-problem.dto';
+import { CowriteSolutionDto } from '../dto/cowrite-solution.dto';
 
 @Injectable()
 export class ProblemsManagerService {
@@ -26,6 +32,7 @@ export class ProblemsManagerService {
     private readonly coursesService: CoursesService,
     private readonly usersService: UsersService,
     private readonly tagsService: TagsService,
+    private readonly aiService: AIService,
   ) {}
 
   async getProblems(
@@ -144,6 +151,8 @@ export class ProblemsManagerService {
       {
         ...problemData,
         instructorId: authenticatedUserId,
+        cowriteProblemAttempts: 0,
+        cowriteSolutionAttempts: 0,
         isDraft: false,
       },
       authenticatedUserId,
@@ -531,5 +540,84 @@ export class ProblemsManagerService {
       }),
     );
     return createPaginatedResponse(mappedProblems, page, total, limit);
+  }
+
+  async cowriteProblem(
+    cowriteProblemDto: CowriteProblemDto,
+    authenticatedUserId: UUID,
+  ): Promise<CowriteProblemResponse> {
+    const _user = await this.usersService.findOne(authenticatedUserId, false, [
+      'institution',
+    ]);
+    // * We can add more validations later, e.g., checking if the institution has AI features enabled, etc.
+    const { title, description, discipline, statement, problemId } =
+      cowriteProblemDto;
+    if (problemId) {
+      const problem = await this.problemsService.findOne({
+        id: problemId,
+        instructorId: authenticatedUserId,
+      });
+      if (problemId && !problem) {
+        throw new BadRequestException('Problem not found.');
+      }
+      if (problem.cowriteProblemAttempts >= 1) {
+        throw new BadRequestException(
+          'You have reached the maximum number of co-write attempts for this problem.',
+        );
+      }
+    }
+    const response = await this.aiService.cowriteProblem(
+      title,
+      description,
+      discipline,
+      statement,
+    );
+    return response;
+  }
+
+  async cowriteSolutionKey(
+    cowriteSolutionDto: CowriteSolutionDto,
+    authenticatedUserId: UUID,
+  ): Promise<string> {
+    const _user = await this.usersService.findOne(authenticatedUserId, false, [
+      'institution',
+    ]);
+    // * We can add more validations later, e.g., checking if the institution has AI features enabled, etc.
+    const {
+      title,
+      description,
+      discipline,
+      statement,
+      assumptions,
+      commonMistakes,
+      additionalInformation,
+      instructorPlan,
+      problemId,
+    } = cowriteSolutionDto;
+    if (problemId) {
+      const problem = await this.problemsService.findOne({
+        id: problemId,
+        instructorId: authenticatedUserId,
+      });
+      if (!problem) {
+        throw new BadRequestException('Problem not found.');
+      }
+      if (problem.cowriteSolutionAttempts >= 1) {
+        throw new BadRequestException(
+          'You have reached the maximum number of co-write solution attempts for this problem.',
+        );
+      }
+    }
+    const response = await this.aiService.generateSolutionKey(
+      title,
+      description,
+      discipline,
+      statement,
+      assumptions,
+      commonMistakes,
+      additionalInformation,
+      instructorPlan,
+    );
+    return response;
   }
 }
