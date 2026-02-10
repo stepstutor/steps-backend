@@ -32,6 +32,7 @@ import { GetCoursesQueryDto } from '../dto/getCoursesQuery.dto';
 import { CreateCourseDto, StudentDto } from '../dto/createCourse.dto';
 import { CoursesManagerService } from '../services/courses.manager.service';
 import { AddProblemToCourseDto } from '../dto/add-problem-to-course.dto';
+import { UpdateCourseProblemSettingsDto } from '../dto/update-problem-settings.dto';
 
 @Controller('courses')
 export class CoursesController {
@@ -231,7 +232,7 @@ export class CoursesController {
     @Param('courseId') courseId: string,
     @Param('problemId') problemId: string,
     @Request() req,
-    @Body() updateProblemBody: AddProblemToCourseDto,
+    @Body() updateProblemBody: UpdateCourseProblemSettingsDto,
   ) {
     const { id: authenticatedUserId, role, institutionId } = req.user;
 
