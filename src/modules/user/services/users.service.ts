@@ -17,6 +17,7 @@ import {
 } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SupabaseClient } from '@supabase/supabase-js';
+import * as crypto from 'crypto';
 
 // **** External Imports ****
 import { Role } from '@common/enums/userRole';
@@ -572,5 +573,42 @@ export class UsersService {
         message: `User invitation for ${user.email} has been successfully deleted`,
       };
     });
+  }
+
+  async generatePasswordResetLink(email: string): Promise<{ message: string }> {
+    const user = await this.findByEmail(email);
+    if (!user) {
+      throw new BadRequestException('User not found.');
+    }
+
+    // Generate a random reset code
+    const resetCode = crypto.randomBytes(32).toString('hex');
+
+    // Set reset date to 1 hour from now
+    const resetDate = new Date();
+    // resetDate.setHours(resetDate.getHours() + 1);
+
+    // Generate reset URL with code as query parameter
+    const resetUrl = `${process.env.SITE_URL}/reset-password?code=${resetCode}`;
+
+    // Update user record
+    await this.update(
+      {
+        resetUrl,
+        resetDate,
+        resetCode,
+        linkUsed: false,
+      },
+      { id: user.id },
+    );
+
+    // Send email with reset link
+    await this.emailService.sendPasswordResetEmail(
+      `${user.firstName} ${user.lastName}`,
+      user.email,
+      resetUrl,
+    );
+
+    return { message: 'Password reset link has been sent to your email.' };
   }
 }
