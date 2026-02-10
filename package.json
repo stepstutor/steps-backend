@@ -44,6 +44,7 @@
     "nestjs-resend": "^1.1.0",
     "nestjs-supabase-auth": "^1.0.9",
     "nestjs-supabase-js": "^1.1.1",
+    "openai": "^6.19.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2",

@@ -572,6 +572,9 @@ export class ProblemsManagerService {
       discipline,
       statement,
     );
+    if (problemId) {
+      await this.problemsService.incrementCowriteProblemAttempts(problemId);
+    }
     return response;
   }
 
@@ -618,6 +621,9 @@ export class ProblemsManagerService {
       additionalInformation,
       instructorPlan,
     );
+    if (problemId) {
+      await this.problemsService.incrementCowriteSolutionAttempts(problemId);
+    }
     return { solutionKey: response };
   }
 }
