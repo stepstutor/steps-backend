@@ -4,7 +4,6 @@ import { ResendService } from 'nestjs-resend';
 import { ConfigService } from '@nestjs/config';
 import { promises as fs } from 'fs';
 import * as mime from 'mime-types';
-import { EMAIL_LOGO_URL } from '../constants';
 
 interface Attachment {
   /** Content of an attached file. */
@@ -612,7 +611,6 @@ export class EmailService {
     name: string,
     email: string,
     resetLink: string,
-    lang: string = 'en',
   ): Promise<void> {
     const content = `
       <html>
@@ -675,24 +673,18 @@ export class EmailService {
       <body>
         <div class="email-container">
           <div class="logo">
-            <img src="${EMAIL_LOGO_URL}" alt="Steps Logo"/>
+            <img src="https://cmi-profile-pics.s3.amazonaws.com/07d95595-1bd1-4436-b942-09487ec2da3a-Property 1=horizontal.jpg" alt="Steps Logo"/>
           </div>
           <div class="content">
-            <h1>${this.i18n.translate('emailTemplates.sendPasswordResetEmail.heading', { lang })}</h1>
-            <p>${this.i18n.translate('emailTemplates.sendPasswordResetEmail.greeting', { args: { name }, lang })}</p>
-            <p>${this.i18n.translate('emailTemplates.sendPasswordResetEmail.body', { lang })}</p>
-            <a href="${resetLink}" class="button">${this.i18n.translate('emailTemplates.sendPasswordResetEmail.buttonText', { lang })}</a>
-            <p style="margin-top: 20px; font-size: 14px; color: #888888;">${this.i18n.translate('emailTemplates.sendPasswordResetEmail.footer', { lang })}</p>
+            <h1>Password Reset Request</h1>
+            <p>Hello ${name},</p>
+            <p>You have requested to reset your password. Please click on the link below to reset your password. This link will be valid for one hour.</p>
+            <a href="${resetLink}" class="button">Reset Password</a>
+            <p style="margin-top: 20px; font-size: 14px; color: #888888;">If you did not request this password reset, please ignore this email.</p>
           </div>
         </div>
       </body>
     </html>`;
-    await this.sendEmail(
-      email,
-      this.i18n.translate('emailTemplates.sendPasswordResetEmail.subject', {
-        lang,
-      }),
-      content,
-    );
+    await this.sendEmail(email, 'Password Reset Request', content);
   }
 }
