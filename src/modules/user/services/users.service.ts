@@ -602,11 +602,17 @@ export class UsersService {
       { id: user.id },
     );
 
+    // Get institution language for email
+    const institution = await this.institutionService.findOne({
+      id: user.institutionId as string,
+    });
+
     // Send email with reset link
     await this.emailService.sendPasswordResetEmail(
       `${user.firstName} ${user.lastName}`,
       user.email,
       resetUrl,
+      institution?.language,
     );
 
     return { message: 'Password reset link has been sent to your email.' };
