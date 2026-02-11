@@ -575,6 +575,65 @@ export class UsersService {
     });
   }
 
+  async resetPasswordWithCode(
+    password: string,
+    code: string,
+  ): Promise<{ status: string; message: string }> {
+    const user = await this.usersRepository.findOne({
+      where: { resetCode: code },
+    });
+
+    if (!user) {
+      return {
+        status: 'error',
+        message: 'Invalid user please request again',
+      };
+    }
+
+    if (!user.resetDate) {
+      return { status: 'error', message: 'Invite expired' };
+    }
+
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    if (user.resetDate < oneHourAgo) {
+      return { status: 'error', message: 'Invite expired' };
+    }
+
+    if (user.linkUsed) {
+      return {
+        status: 'error',
+        message: 'Link already used please request again',
+      };
+    }
+
+    if (!user.supabaseUid) {
+      return {
+        status: 'error',
+        message: 'Invalid user please request again',
+      };
+    }
+
+    const { error } = await this.supabaseClient.auth.admin.updateUserById(
+      user.supabaseUid,
+      { password },
+    );
+
+    if (error) {
+      this.logger.error('Failed to update password in Supabase:', error);
+      return {
+        status: 'error',
+        message: 'Unable to update password. Please try again.',
+      };
+    }
+
+    await this.update({ linkUsed: true }, { id: user.id });
+
+    return {
+      status: 'success',
+      message: 'Password updated successfully.',
+    };
+  }
+
   async generatePasswordResetLink(email: string): Promise<{ message: string }> {
     const user = await this.findByEmail(email);
     if (!user) {

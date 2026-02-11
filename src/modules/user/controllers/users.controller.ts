@@ -38,6 +38,7 @@ import { CreateUserDto } from '../dtos/createUserDto';
 import { ArchiveUsersDto } from '../dtos/archiveUsersDto';
 import { QueryParamsUsersDto } from '../dtos/queryParamsUsersDto';
 import { RequestPasswordResetDto } from '../dtos/requestPasswordResetDto';
+import { ResetPasswordWithCodeDto } from '../dtos/resetPasswordWithCodeDto';
 import { UsersManagerService } from '../services/users.manager.service';
 
 @ApiTags('Users')
@@ -161,6 +162,13 @@ export class UsersController {
   @ApiBody({ type: RequestPasswordResetDto })
   async requestPasswordReset(@Body() body: RequestPasswordResetDto) {
     return this.usersService.generatePasswordResetLink(body.email);
+  }
+
+  @Post('/reset-password-with-code')
+  @ApiOperation({ summary: 'Reset password using reset code' })
+  @ApiBody({ type: ResetPasswordWithCodeDto })
+  async resetPasswordWithCode(@Body() body: ResetPasswordWithCodeDto) {
+    return this.usersService.resetPasswordWithCode(body.password, body.code);
   }
 
   @Post('/update-password')
