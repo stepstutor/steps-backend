@@ -164,4 +164,11 @@ export class AddProblemToCourseDto {
   @IsOptional()
   @IsBoolean()
   requireSolution?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Require feedback for the attempted solution',
+  })
+  @IsOptional()
+  @IsBoolean()
+  requireFeedback?: boolean;
 }

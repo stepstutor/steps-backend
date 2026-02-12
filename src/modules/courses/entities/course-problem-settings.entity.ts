@@ -45,6 +45,9 @@ export class CourseProblemSettings extends Base {
   @Column({ nullable: false, default: false })
   requireSolution: boolean;
 
+  @Column({ nullable: false, default: false })
+  requireFeedback: boolean;
+
   @ManyToOne(() => Course, (course) => course.problemSettings, {
     onDelete: 'CASCADE',
   })
