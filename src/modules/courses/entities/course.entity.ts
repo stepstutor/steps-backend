@@ -1,18 +1,23 @@
+// **** Library Imports ****
 import {
   Entity,
   Column,
   ManyToOne,
   OneToMany,
+  OneToOne,
   JoinColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
+// **** External Imports ****
 import { Base } from '@common/entities/base.entity';
-import { StudentYear } from '@common/enums/studentYear';
 import { Institution } from '@modules/institutions/entities/institutions.entity';
 
+// **** Internal Imports ****
 import { CourseStudent } from './course-student.entity';
 import { CourseInstructor } from './course-instructor.entity';
+import { CourseProblemSettings } from './course-problem-settings.entity';
+import { Discipline } from '@common/enums/discipline';
 
 @Entity()
 export class Course extends Base {
@@ -31,16 +36,11 @@ export class Course extends Base {
   @Column()
   courseColor: string;
 
-  @Column({ default: 'Medicine' })
-  programOfCourse: string;
+  @Column({ type: 'enum', enum: Discipline, nullable: false })
+  discipline: Discipline;
 
-  @Column({
-    type: 'enum',
-    enum: StudentYear,
-    default: null,
-    nullable: true,
-  })
-  yearOfStudent: StudentYear | null;
+  @Column({ type: 'varchar', nullable: false })
+  courseType: string;
 
   @Column({ default: true })
   isActive: boolean;
@@ -62,4 +62,10 @@ export class Course extends Base {
 
   @OneToMany(() => CourseStudent, (courseStudent) => courseStudent.course)
   courseStudents: Promise<CourseStudent[]>;
+
+  @OneToOne(
+    () => CourseProblemSettings,
+    (problemSettings) => problemSettings.course,
+  )
+  problemSettings: Promise<CourseProblemSettings | null>;
 }

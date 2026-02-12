@@ -31,7 +31,7 @@ export class EmailService {
     attachments: Attachment[] = [],
   ): Promise<void> {
     await this.resendService.emails.send({
-      from: 'Clinical Mind AI <no-reply@system.clinicalmindai.com>',
+      from: 'Steps Tutor <no-reply@system.stepstutor.ai>',
       to: email,
       subject: subject,
       html: content,
@@ -48,7 +48,7 @@ export class EmailService {
       const batch = emails.splice(0, 90);
       await this.resendService.sendBatch(
         batch.map((email) => ({
-          from: 'Clinical Mind AI <no-reply@system.clinicalmindai.com>',
+          from: 'Steps Tutor <no-reply@system.stepstutor.ai>',
           to: email,
           subject: subject,
           html: content,
@@ -125,7 +125,7 @@ export class EmailService {
       <body>
         <div class="email-container">
           <div class="logo">
-            <img src="https://cmi-profile-pics.s3.amazonaws.com/07d95595-1bd1-4436-b942-09487ec2da3a-Property 1=horizontal.jpg" alt="Clinical Mind AI Logo">
+            <img src="https://cmi-profile-pics.s3.amazonaws.com/07d95595-1bd1-4436-b942-09487ec2da3a-Property 1=horizontal.jpg" alt="Steps Tutor Logo">
           </div>
           <div class="content">
             <h1>${this.i18n.translate('emailTemplates.sendCourseAssignNotificationEmailToStudent.subject', { args: { courseName }, lang })}</h1>
@@ -213,7 +213,7 @@ export class EmailService {
         <body>
           <div class="email-container">
             <div class="logo">
-              <img src="https://cmi-profile-pics.s3.amazonaws.com/07d95595-1bd1-4436-b942-09487ec2da3a-Property 1=horizontal.jpg" alt="Clinical Mind AI Logo">
+              <img src="https://cmi-profile-pics.s3.amazonaws.com/07d95595-1bd1-4436-b942-09487ec2da3a-Property 1=horizontal.jpg" alt="Steps Tutor AI Logo">
             </div>
             <div class="content">
               <h1>${this.i18n.translate('emailTemplates.sendCourseAssignNotificationEmailToInstructor.heading', { args: { courseName }, lang })}</h1>
@@ -300,7 +300,7 @@ export class EmailService {
       <body>
         <div class="email-container">
           <div class="logo">
-            <img src="https://cmi-profile-pics.s3.amazonaws.com/07d95595-1bd1-4436-b942-09487ec2da3a-Property 1=horizontal.jpg" alt="Clinical Mind AI Logo"/>
+            <img src="https://png.pngtree.com/png-clipart/20190604/original/pngtree-creative-company-logo-png-image_1420804.jpg" alt="Steps Tutor AI Logo"/>
           </div>
           <div class="content">
             <h1>${this.i18n.translate('emailTemplates.sendInvitationEmail.heading', { lang })}</h1>
@@ -377,7 +377,7 @@ export class EmailService {
       <body>
         <div class="email-container">
           <div class="logo">
-            <img src="https://cmi-profile-pics.s3.amazonaws.com/07d95595-1bd1-4436-b942-09487ec2da3a-Property 1=horizontal.jpg" alt="Clinical Mind AI Logo"/>
+            <img src="https://png.pngtree.com/png-clipart/20190604/original/pngtree-creative-company-logo-png-image_1420804.jpg" alt="Steps Tutor AI Logo"/>
           </div>
           <div class="content">
             <h1>${this.i18n.translate('emailTemplates.sendWelcomeEmail.heading', { lang })}</h1>
@@ -391,12 +391,6 @@ export class EmailService {
       email,
       this.i18n.translate('emailTemplates.sendWelcomeEmail.subject', { lang }),
       content,
-      [
-        {
-          path: 'https://cmi-profile-pics.s3.amazonaws.com/32110782-2bd9-42ef-8ac7-6380cd420b11-Terms of Service Clinical Mind AI 2.25.25.pdf',
-          filename: 'Terms of Service.pdf',
-        },
-      ],
     );
   }
 
@@ -458,7 +452,7 @@ export class EmailService {
         <body>
           <div class="email-container">
             <div class="logo">
-              <img src="https://cmi-profile-pics.s3.amazonaws.com/07d95595-1bd1-4436-b942-09487ec2da3a-Property 1=horizontal.jpg" alt="Clinical Mind AI Logo">
+              <img src="https://png.pngtree.com/png-clipart/20190604/original/pngtree-creative-company-logo-png-image_1420804.jpg" alt="Steps Tutor AI Logo">
             </div>
             <div class="content">
               <h1>${announcementTitle}</h1>
@@ -467,7 +461,7 @@ export class EmailService {
             </div>
             <div class="footer">
               <p>Best,</p>
-              <p>Clinical Mind AI team.</p>
+              <p>Steps Tutor AI team.</p>
             </div>
           </div>
         </body>
@@ -564,7 +558,7 @@ export class EmailService {
       <body>
         <div class="email-container">
           <div class="logo">
-            <img src="https://cmi-profile-pics.s3.amazonaws.com/07d95595-1bd1-4436-b942-09487ec2da3a-Property 1=horizontal.jpg" alt="Clinical Mind AI Logo"/>
+            <img src="https://cmi-profile-pics.s3.amazonaws.com/07d95595-1bd1-4436-b942-09487ec2da3a-Property 1=horizontal.jpg" alt="Steps Tutor AI Logo"/>
           </div>
           <div class="content">
             <h1>${this.i18n.translate('emailTemplates.sendDataEmail.heading', {

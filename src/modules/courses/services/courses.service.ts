@@ -1,19 +1,21 @@
+import { In, DataSource, Repository, FindOptionsWhere } from 'typeorm';
 import {
+  Inject,
   Injectable,
+  forwardRef,
+  NotFoundException,
   BadRequestException,
   InternalServerErrorException,
-  forwardRef,
-  Inject,
 } from '@nestjs/common';
 import { UUID } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, FindOptionsWhere, In, Repository } from 'typeorm';
 
 import { Role } from '@common/enums/userRole';
 import { User } from '@modules/user/entities/user.entity';
 import { InstructorType } from '@common/enums/instructorType';
 import { UsersService } from '@modules/user/services/users.service';
 import { ReceiverGroup } from '@common/enums/notificationReceiverGroup';
+import { ProblemsService } from '@modules/problems/services/problems.service';
 import { InstitutionsService } from '@modules/institutions/institutions.service';
 import { Institution } from '@modules/institutions/entities/institutions.entity';
 import { UserWithInvitationLink } from '@modules/user/types/userWithInvitationLink';
@@ -22,6 +24,10 @@ import { Course } from '../entities/course.entity';
 import { StudentDto } from '../dto/createCourse.dto';
 import { CourseStudent } from '../entities/course-student.entity';
 import { CourseInstructor } from '../entities/course-instructor.entity';
+import { CourseProblemSettings } from '../entities/course-problem-settings.entity';
+import { AddProblemToCourseDto } from '../dto/add-problem-to-course.dto';
+import { TagsService } from '@modules/tags/services/tags.service';
+import { Problem } from '@modules/problems/entities/problem.entity';
 
 @Injectable()
 export class CoursesService {
@@ -32,11 +38,16 @@ export class CoursesService {
     private courseStudentRepository: Repository<CourseStudent>,
     @InjectRepository(CourseInstructor)
     private courseInstructorRepository: Repository<CourseInstructor>,
+    @InjectRepository(CourseProblemSettings)
+    private courseProblemSettingsRepository: Repository<CourseProblemSettings>,
     private readonly dataSource: DataSource,
     @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
     @Inject(forwardRef(() => InstitutionsService))
     private readonly institutionService: InstitutionsService,
+    @Inject(forwardRef(() => ProblemsService))
+    private readonly problemsService: ProblemsService,
+    private readonly tagsService: TagsService,
   ) {}
 
   async findAll(
@@ -45,10 +56,28 @@ export class CoursesService {
     limit?: number,
     sortBy?: string,
     sortOrder?: 'ASC' | 'DESC',
+    userId?: string,
+    role?: Role,
   ): Promise<[Course[], number]> {
     const query = this.courseRepository.createQueryBuilder('course');
     if (where) {
-      query.where;
+      query.where(where);
+    }
+    if (role === Role.INSTRUCTOR && userId) {
+      query.innerJoin(
+        'course.courseInstructors',
+        'courseInstructor',
+        'courseInstructor.instructorId = :userId',
+        { userId },
+      );
+    }
+    if (role === Role.STUDENT && userId) {
+      query.innerJoin(
+        'course.courseStudents',
+        'courseStudent',
+        'courseStudent.studentId = :userId',
+        { userId },
+      );
     }
     if (sortBy) {
       query.orderBy(`course.${sortBy}`, sortOrder || 'ASC');
@@ -452,5 +481,89 @@ export class CoursesService {
       subInstructors: await Promise.all(subInstructors),
       students: await Promise.all(students),
     };
+  }
+
+  async addProblemToCourse(
+    course: Course,
+    problemId: string,
+    addProblemBody: AddProblemToCourseDto,
+    authenticatedUserId: UUID,
+  ) {
+    const { isDraft, ...problemSettings } = addProblemBody;
+    const problem = await this.problemsService.findOne({
+      id: problemId,
+      isDraft: false,
+    });
+    if (!problem) {
+      throw new NotFoundException('Problem not found');
+    }
+    const tags = await this.tagsService.extractTagsFromProblem(problem);
+    const problemCopy: Problem = await this.problemsService.createCourseProblem(
+      problem,
+      course.id,
+      authenticatedUserId,
+      tags,
+      isDraft,
+    );
+    const courseProblemSettings = new CourseProblemSettings();
+    Object.assign(courseProblemSettings, problemSettings);
+    courseProblemSettings.courseId = course.id;
+    courseProblemSettings.problemId = problemCopy.id;
+    await this.courseProblemSettingsRepository.save(courseProblemSettings);
+    return await this.problemsService.findOne({ id: problemCopy.id }, [
+      'courseProblemSettings',
+    ]);
+  }
+
+  async updateProblemSettings(
+    course: Course,
+    problemId: string,
+    updateProblemBody: AddProblemToCourseDto,
+    authenticatedUserId: UUID,
+  ) {
+    const problem = await this.problemsService.findOne({ id: problemId }, [
+      'courseProblemSettings',
+    ]);
+
+    if (problem.courseId !== course.id) {
+      throw new BadRequestException('Problem does not belong to this course');
+    }
+
+    // TODO: Change this to settings key isPublished once the problem entity is updated
+    if (problem.isDraft && updateProblemBody.isDraft === false) {
+      await this.problemsService.update(problem.id, { isDraft: false });
+    }
+
+    const existingSettings = await this.courseProblemSettingsRepository.findOne(
+      {
+        where: { courseId: course.id, problemId },
+      },
+    );
+
+    if (!existingSettings) {
+      throw new NotFoundException('Course problem settings not found');
+    }
+
+    Object.entries(updateProblemBody).forEach(([key, value]) => {
+      if (value !== undefined) {
+        existingSettings[key] = value;
+      }
+    });
+
+    existingSettings.updatedBy = authenticatedUserId;
+
+    await this.courseProblemSettingsRepository.save(existingSettings);
+
+    return this.problemsService.findOne({ id: problemId }, [
+      'courseProblemSettings',
+    ]);
+  }
+
+  async removeProblemFromCourse(course: Course, problemId: string) {
+    const problem = await this.problemsService.findOne({ id: problemId });
+    if (problem.courseId !== course.id) {
+      throw new BadRequestException('Problem does not belong to this course');
+    }
+    await this.problemsService.remove(problemId);
   }
 }

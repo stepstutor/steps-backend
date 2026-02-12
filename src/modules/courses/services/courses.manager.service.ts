@@ -30,6 +30,8 @@ import { UpdateCourseDto } from '../dto/updateCourseDto';
 import { GetCoursesQueryDto } from '../dto/getCoursesQuery.dto';
 import { CreateCourseDto, StudentDto } from '../dto/createCourse.dto';
 import { CourseInstructor } from '../entities/course-instructor.entity';
+import { AddProblemToCourseDto } from '../dto/add-problem-to-course.dto';
+import { UpdateCourseProblemSettingsDto } from '../dto/update-problem-settings.dto';
 
 @Injectable()
 export class CoursesManagerService {
@@ -60,17 +62,11 @@ export class CoursesManagerService {
     if (role === Role.INSTRUCTOR) {
       where = {
         ...where,
-        courseInstructors: {
-          instructorId: authenticatedUserId,
-        },
       };
     }
     if (role === Role.STUDENT) {
       where = {
         ...where,
-        courseStudents: {
-          studentId: authenticatedUserId,
-        },
       };
     }
     if (getCoursesQuery.isActive !== undefined) {
@@ -85,6 +81,8 @@ export class CoursesManagerService {
       limit,
       sortBy,
       sortOrder,
+      authenticatedUserId,
+      role,
     );
     // const coursesInstructors = await Promise.all(courses.map(course => course.courseInstructors));
     // const coursesStudents = await Promise.all(courses.map(course => course.courseStudents));
@@ -223,7 +221,6 @@ export class CoursesManagerService {
     const result = await this.coursesService.create(
       {
         ...rest,
-        yearOfStudent: rest.yearOfStudent || null,
         institutionId: institutionId,
         createdBy: authenticatedUserId,
         updatedBy: authenticatedUserId,
@@ -704,5 +701,111 @@ export class CoursesManagerService {
       }
       this.notificationQueue.addBulk(notificationObjs);
     }
+  }
+
+  async addProblemToCourse(
+    courseId: string,
+    problemId: string,
+    addProblemBody: AddProblemToCourseDto,
+    authenticatedUserId: UUID,
+    role: Role,
+    institutionId: string,
+  ) {
+    let where: FindOptionsWhere<Course> = {
+      institutionId,
+      id: courseId,
+    };
+
+    if (role === Role.INSTRUCTOR) {
+      where = {
+        ...where,
+        courseInstructors: {
+          instructorId: authenticatedUserId,
+          instructorType: InstructorType.MAIN,
+        },
+      };
+    }
+
+    const course = await this.coursesService.findOne(where);
+    if (!course) {
+      throw new BadRequestException();
+    }
+    return await this.coursesService.addProblemToCourse(
+      course,
+      problemId,
+      addProblemBody,
+      authenticatedUserId,
+    );
+  }
+
+  async updateProblemSettings(
+    courseId: string,
+    problemId: string,
+    updateProblemBody: UpdateCourseProblemSettingsDto,
+    authenticatedUserId: UUID,
+    role: Role,
+    institutionId: string,
+  ) {
+    let where: FindOptionsWhere<Course> = {
+      institutionId,
+      id: courseId,
+    };
+
+    if (updateProblemBody.hasPlanning === false) {
+      updateProblemBody.planningReleaseDate = null;
+      updateProblemBody.planningDueDate = null;
+      updateProblemBody.requireSolution = false;
+    }
+    if (updateProblemBody.hasReflection === false) {
+      updateProblemBody.reflectionReleaseDate = null;
+      updateProblemBody.reflectionDueDate = null;
+    }
+
+    if (role === Role.INSTRUCTOR) {
+      where = {
+        ...where,
+        courseInstructors: {
+          instructorId: authenticatedUserId,
+        },
+      };
+    }
+
+    const course = await this.coursesService.findOne(where);
+    if (!course) {
+      throw new BadRequestException();
+    }
+
+    return this.coursesService.updateProblemSettings(
+      course,
+      problemId,
+      updateProblemBody,
+      authenticatedUserId,
+    );
+  }
+
+  async removeProblemFromCourse(
+    courseId: string,
+    problemId: string,
+    authenticatedUserId: UUID,
+    role: Role,
+    institutionId: string,
+  ) {
+    let where: FindOptionsWhere<Course> = {
+      institutionId,
+      id: courseId,
+    };
+    if (role === Role.INSTRUCTOR) {
+      where = {
+        ...where,
+        courseInstructors: {
+          instructorId: authenticatedUserId,
+        },
+      };
+    }
+    const course = await this.coursesService.findOne(where);
+    if (!course) {
+      throw new BadRequestException();
+    }
+    return this.coursesService.removeProblemFromCourse(course, problemId);
   }
 }

@@ -637,9 +637,10 @@ export class UsersService {
   async generatePasswordResetLink(email: string): Promise<{ message: string }> {
     const user = await this.findByEmail(email);
     if (!user) {
-      throw new BadRequestException('User not found.');
+      return {
+        message: 'User not found.',
+      };
     }
-
     // Generate a random reset code
     const resetCode = crypto.randomBytes(32).toString('hex');
 
@@ -669,5 +670,21 @@ export class UsersService {
     );
 
     return { message: 'Password reset link has been sent to your email.' };
+  }
+
+  async updateWalkthroughScreens(
+    userId: string,
+    walkthroughScreens: string,
+  ): Promise<User> {
+    const user = await this.findOne(userId, false, ['institution']);
+    if (!user) {
+      throw new BadRequestException('User not found.');
+    }
+
+    user.walkthroughScreens = [
+      ...(user.walkthroughScreens || []),
+      walkthroughScreens,
+    ];
+    return await this.usersRepository.save(user);
   }
 }

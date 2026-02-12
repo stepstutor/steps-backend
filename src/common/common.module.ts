@@ -35,7 +35,7 @@ import { NotificationConsumer } from './consumers/notification.consumer';
         username: configService.get<string>('DATABASE_USER'),
         password: configService.get<string>('DATABASE_PASSWORD'),
         database: configService.get<string>('DATABASE_DB'),
-        schema: configService.get<string>('DATABASE_SCHEMA'),
+        schema: configService.get<string>('DATABASE_SCHEMA') || 'public',
         entities: [path.join(__dirname, '../modules/**/**.entity{.ts,.js}')],
         migrations: [path.join(__dirname, '../database/migrations/**/*.ts')],
         synchronize: false,

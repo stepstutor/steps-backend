@@ -12,7 +12,12 @@ import {
   UseGuards,
   Controller,
 } from '@nestjs/common';
-import { ApiOperation, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiBearerAuth,
+  ApiBody,
+  ApiParam,
+} from '@nestjs/swagger';
 
 // **** External Imports ****
 import { Role } from '@common/enums/userRole';
@@ -26,6 +31,8 @@ import { UpdateCourseDto } from '../dto/updateCourseDto';
 import { GetCoursesQueryDto } from '../dto/getCoursesQuery.dto';
 import { CreateCourseDto, StudentDto } from '../dto/createCourse.dto';
 import { CoursesManagerService } from '../services/courses.manager.service';
+import { AddProblemToCourseDto } from '../dto/add-problem-to-course.dto';
+import { UpdateCourseProblemSettingsDto } from '../dto/update-problem-settings.dto';
 
 @Controller('courses')
 export class CoursesController {
@@ -186,6 +193,78 @@ export class CoursesController {
       institutionId,
       firstName,
       lastName,
+    );
+  }
+
+  @Post(':courseId/problem/:problemId')
+  @ApiOperation({ summary: 'Add problem to a course' })
+  @ApiParam({ name: 'problemId', description: 'ID of the problem to add' })
+  @ApiParam({ name: 'courseId', description: 'ID of the course' })
+  @Roles([Role.INSTRUCTOR])
+  @UseGuards(SupabaseAuthGuard, InActiveUserGuard, RolesGuard)
+  @ApiBearerAuth('access-token')
+  async addProblem(
+    @Param('courseId') courseId: string,
+    @Param('problemId') problemId: string,
+    @Request() req,
+    @Body() addProblemBody: AddProblemToCourseDto,
+  ) {
+    const { id: authenticatedUserId, role, institutionId } = req.user;
+
+    return await this.courseManagerService.addProblemToCourse(
+      courseId,
+      problemId,
+      addProblemBody,
+      authenticatedUserId,
+      role,
+      institutionId,
+    );
+  }
+
+  @Put(':courseId/problem/:problemId')
+  @ApiOperation({ summary: 'Update course problem settings' })
+  @ApiParam({ name: 'problemId', description: 'ID of the problem to update' })
+  @ApiParam({ name: 'courseId', description: 'ID of the course' })
+  @Roles([Role.INSTRUCTOR])
+  @UseGuards(SupabaseAuthGuard, InActiveUserGuard, RolesGuard)
+  @ApiBearerAuth('access-token')
+  async updateProblemSettings(
+    @Param('courseId') courseId: string,
+    @Param('problemId') problemId: string,
+    @Request() req,
+    @Body() updateProblemBody: UpdateCourseProblemSettingsDto,
+  ) {
+    const { id: authenticatedUserId, role, institutionId } = req.user;
+
+    return this.courseManagerService.updateProblemSettings(
+      courseId,
+      problemId,
+      updateProblemBody,
+      authenticatedUserId,
+      role,
+      institutionId,
+    );
+  }
+
+  @Delete(':courseId/problem/:problemId')
+  @ApiOperation({ summary: 'Remove problem from a course' })
+  @ApiParam({ name: 'problemId', description: 'ID of the problem to remove' })
+  @ApiParam({ name: 'courseId', description: 'ID of the course' })
+  @Roles([Role.INSTRUCTOR])
+  @UseGuards(SupabaseAuthGuard, InActiveUserGuard, RolesGuard)
+  @ApiBearerAuth('access-token')
+  async removeProblem(
+    @Param('courseId') courseId: string,
+    @Param('problemId') problemId: string,
+    @Request() req,
+  ) {
+    const { id: authenticatedUserId, role, institutionId } = req.user;
+    this.courseManagerService.removeProblemFromCourse(
+      courseId,
+      problemId,
+      authenticatedUserId,
+      role,
+      institutionId,
     );
   }
 

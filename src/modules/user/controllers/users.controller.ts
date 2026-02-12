@@ -40,6 +40,7 @@ import { QueryParamsUsersDto } from '../dtos/queryParamsUsersDto';
 import { RequestPasswordResetDto } from '../dtos/requestPasswordResetDto';
 import { ResetPasswordWithCodeDto } from '../dtos/resetPasswordWithCodeDto';
 import { UsersManagerService } from '../services/users.manager.service';
+import { WalkthroughScreenDto } from '../dtos/walkthroughScreenDto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -111,6 +112,22 @@ export class UsersController {
       authenticatedUserId,
       updateUserBody,
       file,
+    );
+  }
+
+  @Put('/update-walkthrough-screens')
+  @ApiOperation({ summary: 'Update authenticated user walkthrough screens' })
+  @ApiBearerAuth('access-token')
+  @UseGuards(SupabaseAuthGuard, InActiveUserGuard)
+  updateWalkthroughScreens(
+    @Request() req,
+    @Body() updateUserBody: WalkthroughScreenDto,
+  ) {
+    const { id: authenticatedUserId } = req.user;
+
+    return this.usersService.updateWalkthroughScreens(
+      authenticatedUserId,
+      updateUserBody.screenName,
     );
   }
 
