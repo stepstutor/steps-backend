@@ -635,10 +635,14 @@ export class UsersService {
   }
 
   async generatePasswordResetLink(email: string): Promise<{ message: string }> {
-    const user = await this.findByEmail(email);
+    const user = await this.usersRepository.findOneBy({
+      email,
+      isActive: true,
+    });
     if (!user) {
       return {
-        message: 'User not found.',
+        message:
+          'A password reset link has been sent to your registered email address. Please check your inbox and follow the instructions provided to reset your password.',
       };
     }
     // Generate a random reset code
@@ -669,7 +673,10 @@ export class UsersService {
       resetUrl,
     );
 
-    return { message: 'Password reset link has been sent to your email.' };
+    return {
+      message:
+        'A password reset link has been sent to your registered email address. Please check your inbox and follow the instructions provided to reset your password.',
+    };
   }
 
   async updateWalkthroughScreens(
