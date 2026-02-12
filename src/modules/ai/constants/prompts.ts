@@ -37,5 +37,5 @@ export const createCowriteProblemSolutionPrompt = (
     Instructor's Step-by-Step Plan: ${instructorPlan}
     
     Based on the above details of the problem, generate a detailed solution to the problem.
-    Provide the solution in a clear and structured HTML format that is accepted by KaTeX, ensuring that you follow the instructor's step-by-step plan while solving the problem.
-    `;
+    Provide the solution in a clear and structured HTML format that is accepted by KaTeX library, ensuring that you follow the instructor's step-by-step plan while solving the problem.
+To write the formulae in the solution, use the following HTML format: <p class="leading-5 [&amp;:not(:first-child)]:mt-6"> <span class="katex" data-equation="{{The equation in Latex}}" data-display-mode="false"> </span> </p> `;
