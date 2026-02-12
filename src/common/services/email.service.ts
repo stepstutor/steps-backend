@@ -667,7 +667,7 @@ export class EmailService {
       <body>
         <div class="email-container">
           <div class="logo">
-            <img src="https://cmi-profile-pics.s3.amazonaws.com/07d95595-1bd1-4436-b942-09487ec2da3a-Property 1=horizontal.jpg" alt="Steps Logo"/>
+            <img src="https://devops-stepstutor-ai-profile-pics-testing.s3.amazonaws.com/2ea58e00-c802-43e8-af1b-73fbb66a0e74-logoaws.jpg" alt="Steps Logo"/>
           </div>
           <div class="content">
             <h1>Password Reset Request</h1>
