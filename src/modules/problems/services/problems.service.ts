@@ -456,4 +456,20 @@ export class ProblemsService {
     const createdUploads = this.problemUploadRepository.create(uploads);
     await this.problemUploadRepository.save(createdUploads);
   }
+
+  async incrementCowriteProblemAttempts(problemId: string): Promise<void> {
+    await this.problemRepository.increment(
+      { id: problemId },
+      'cowriteProblemAttempts',
+      1,
+    );
+  }
+
+  async incrementCowriteSolutionAttempts(problemId: string): Promise<void> {
+    await this.problemRepository.increment(
+      { id: problemId },
+      'cowriteSolutionAttempts',
+      1,
+    );
+  }
 }

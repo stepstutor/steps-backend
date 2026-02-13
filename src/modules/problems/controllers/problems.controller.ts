@@ -36,6 +36,8 @@ import { InActiveUserGuard } from '@common/guards/inActiveUser.guard';
 import { SupabaseAuthGuard } from '@common/guards/supabase-auth.guard';
 import { GetProblemsByCourseQueryDto } from '../dto/get-problems-by-course-query.dto';
 import { DraftProblemDto } from '../dto/draft-problem.dto';
+import { CowriteProblemDto } from '../dto/cowrite-problem.dto';
+import { CowriteSolutionDto } from '../dto/cowrite-solution.dto';
 
 @Controller('problems')
 @ApiTags('Problems')
@@ -103,6 +105,33 @@ export class ProblemsController {
       createProblemDto,
       authenticatedUserId,
       institutionId,
+    );
+  }
+
+  @Post('/cowrite/problem')
+  @ApiOperation({ summary: 'Co-write problem' })
+  @Roles([Role.INSTRUCTOR])
+  @ApiBody({ type: CowriteProblemDto })
+  cowriteProblem(@Body() cowriteProblemDto: CowriteProblemDto, @Request() req) {
+    const { id: authenticatedUserId } = req.user;
+    return this.problemsManager.cowriteProblem(
+      cowriteProblemDto,
+      authenticatedUserId,
+    );
+  }
+
+  @Post('/cowrite/solution')
+  @ApiOperation({ summary: 'Co-write problem' })
+  @Roles([Role.INSTRUCTOR])
+  @ApiBody({ type: CowriteSolutionDto })
+  cowriteProblemSolution(
+    @Body() cowriteSolutionDto: CowriteSolutionDto,
+    @Request() req,
+  ) {
+    const { id: authenticatedUserId } = req.user;
+    return this.problemsManager.cowriteSolutionKey(
+      cowriteSolutionDto,
+      authenticatedUserId,
     );
   }
 

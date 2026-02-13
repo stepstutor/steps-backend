@@ -7,6 +7,7 @@ import {
   ResponseInterceptor,
   RequestLoggingInterceptor,
 } from '@common/interceptors';
+import { AIModule } from './modules/ai/ai.module';
 import { CommonModule } from '@common/common.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { TagsModule } from '@modules/tags/tags.module';
@@ -37,6 +38,7 @@ import { LogsAndTracksModule } from '@modules/logs-and-tracks/logs-and-tracks.mo
     InstitutionsModule,
     LogsAndTracksModule,
     NotificationsModule,
+    AIModule,
   ],
   providers: [
     {

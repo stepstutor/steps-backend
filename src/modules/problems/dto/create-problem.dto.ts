@@ -194,3 +194,12 @@ export class CreateProblemDto {
   @Type(() => MediaItemDto)
   wrapUpUploads?: MediaItemDto[];
 }
+
+export interface CowriteProblemResponse {
+  essentialConcepts: string;
+  conceptsConnection: string;
+  assumptions: string;
+  commonMistakes: string;
+  additionalInformation: string;
+  instructorPlan: string;
+}

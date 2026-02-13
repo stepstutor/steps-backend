@@ -13,6 +13,7 @@ import { Tag } from '@modules/tags/entities/tag.entity';
 import { UsersModule } from '@modules/user/users.module';
 import { CoursesModule } from '@modules/courses/courses.module';
 import { ProblemUpload } from './entities/problem-upload.entity';
+import { AIModule } from '@modules/ai/ai.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ProblemUpload } from './entities/problem-upload.entity';
     forwardRef(() => CoursesModule),
     forwardRef(() => UsersModule),
     TagsModule,
+    AIModule,
   ],
   controllers: [ProblemsController],
   providers: [ProblemsService, ProblemsManagerService],
