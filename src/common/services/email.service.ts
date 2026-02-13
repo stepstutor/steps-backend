@@ -600,4 +600,85 @@ export class EmailService {
       hasData ? [attachment] : [],
     );
   }
+
+  async sendPasswordResetEmail(
+    name: string,
+    email: string,
+    resetLink: string,
+  ): Promise<void> {
+    const content = `
+      <html>
+        <head>
+          <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 0;
+                background-color: #f9f9f9;
+            }
+            .email-container {
+                max-width: 600px;
+                margin: 20px auto;
+                background-color: #ffffff;
+                border-radius: 8px;
+                padding: 20px;
+                text-align: left;
+            }
+            .logo {
+                margin-bottom: 20px;
+            }
+            .logo img {
+                width: 150px;
+            }
+            .content h1 {
+                font-size: 24px;
+                color: #333333;
+                margin-bottom: 20px;
+            }
+            .content p {
+                font-size: 16px;
+                color: #555555;
+                margin: 10px 0;
+            }
+            .button {
+                display: inline-block;
+                background-color: #007bff;
+                color: #ffffff !important;
+                text-decoration: none;
+                padding: 8px 20px;
+                font-size: 14px;
+                border-radius: 4px;
+                margin-top: 20px;
+            }
+            .button:hover {
+                background-color: #0056b3;
+            }
+            .footer {
+                margin-top: 20px;
+                font-size: 12px;
+                color: #888888;
+            }
+            .footer a {
+                color: #0073e6;
+                text-decoration: none;
+            }
+        </style>
+      </head>
+      <body>
+        <div class="email-container">
+          <div class="logo">
+            <img src="https://devops-stepstutor-ai-profile-pics-testing.s3.amazonaws.com/2ea58e00-c802-43e8-af1b-73fbb66a0e74-logoaws.jpg" alt="Steps Logo"/>
+          </div>
+          <div class="content">
+            <h1>Password Reset Request</h1>
+            <p>Hello ${name},</p>
+            <p>You have requested to reset your password. Please click on the link below to reset your password. This link will be valid for one hour.</p>
+            <a href="${resetLink}" class="button">Reset Password</a>
+            <p style="margin-top: 20px; font-size: 14px; color: #888888;">If you did not request this password reset, please ignore this email.</p>
+          </div>
+        </div>
+      </body>
+    </html>`;
+    await this.sendEmail(email, 'Password Reset Request', content);
+  }
 }

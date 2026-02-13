@@ -37,6 +37,8 @@ import { UpdateUserDto } from '../dtos/updateUserDto';
 import { CreateUserDto } from '../dtos/createUserDto';
 import { ArchiveUsersDto } from '../dtos/archiveUsersDto';
 import { QueryParamsUsersDto } from '../dtos/queryParamsUsersDto';
+import { RequestPasswordResetDto } from '../dtos/requestPasswordResetDto';
+import { ResetPasswordWithCodeDto } from '../dtos/resetPasswordWithCodeDto';
 import { UsersManagerService } from '../services/users.manager.service';
 import { WalkthroughScreenDto } from '../dtos/walkthroughScreenDto';
 
@@ -170,6 +172,20 @@ export class UsersController {
   @ApiBearerAuth('access-token')
   getProfile(@Request() req) {
     return req.user;
+  }
+
+  @Post('/request-password-reset')
+  @ApiOperation({ summary: 'Request password reset link' })
+  @ApiBody({ type: RequestPasswordResetDto })
+  async requestPasswordReset(@Body() body: RequestPasswordResetDto) {
+    return this.usersService.generatePasswordResetLink(body.email);
+  }
+
+  @Post('/reset-password-with-code')
+  @ApiOperation({ summary: 'Reset password using reset code' })
+  @ApiBody({ type: ResetPasswordWithCodeDto })
+  async resetPasswordWithCode(@Body() body: ResetPasswordWithCodeDto) {
+    return this.usersService.resetPasswordWithCode(body.password, body.code);
   }
 
   @Post('/update-password')

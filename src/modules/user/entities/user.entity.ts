@@ -56,4 +56,16 @@ export class User extends Base {
 
   @DeleteDateColumn()
   deletedAt?: Date;
+
+  @Column({ type: 'varchar', nullable: true })
+  resetUrl: string | null;
+
+  @Column({ type: 'timestamp with time zone', nullable: true })
+  resetDate: Date | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  resetCode: string | null;
+
+  @Column({ default: false })
+  linkUsed: boolean;
 }

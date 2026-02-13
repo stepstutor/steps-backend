@@ -17,6 +17,7 @@ import {
 } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SupabaseClient } from '@supabase/supabase-js';
+import * as crypto from 'crypto';
 
 // **** External Imports ****
 import { Role } from '@common/enums/userRole';
@@ -572,6 +573,110 @@ export class UsersService {
         message: `User invitation for ${user.email} has been successfully deleted`,
       };
     });
+  }
+
+  async resetPasswordWithCode(
+    password: string,
+    code: string,
+  ): Promise<{ status: string; message: string }> {
+    const user = await this.usersRepository.findOne({
+      where: { resetCode: code },
+    });
+
+    if (!user) {
+      return {
+        status: 'error',
+        message: 'Invalid user please request again',
+      };
+    }
+
+    if (!user.resetDate) {
+      return { status: 'error', message: 'Invite expired' };
+    }
+
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    if (user.resetDate < oneHourAgo) {
+      return { status: 'error', message: 'Invite expired' };
+    }
+
+    if (user.linkUsed) {
+      return {
+        status: 'error',
+        message: 'Link already used please request again',
+      };
+    }
+
+    if (!user.supabaseUid) {
+      return {
+        status: 'error',
+        message: 'Invalid user please request again',
+      };
+    }
+
+    const { error } = await this.supabaseClient.auth.admin.updateUserById(
+      user.supabaseUid,
+      { password },
+    );
+
+    if (error) {
+      this.logger.error('Failed to update password in Supabase:', error);
+      return {
+        status: 'error',
+        message: 'Unable to update password. Please try again.',
+      };
+    }
+
+    await this.update({ linkUsed: true }, { id: user.id });
+
+    return {
+      status: 'success',
+      message: 'Password updated successfully.',
+    };
+  }
+
+  async generatePasswordResetLink(email: string): Promise<{ message: string }> {
+    const user = await this.usersRepository.findOneBy({
+      email,
+      isActive: true,
+    });
+    if (!user) {
+      return {
+        message:
+          'A password reset link has been sent to your registered email address. Please check your inbox and follow the instructions provided to reset your password.',
+      };
+    }
+    // Generate a random reset code
+    const resetCode = crypto.randomBytes(32).toString('hex');
+
+    // Set reset date to 1 hour from now
+    const resetDate = new Date();
+    // resetDate.setHours(resetDate.getHours() + 1);
+
+    // Generate reset URL with code as query parameter
+    const resetUrl = `${process.env.SITE_URL}/reset-password?code=${resetCode}`;
+
+    // Update user record
+    await this.update(
+      {
+        resetUrl,
+        resetDate,
+        resetCode,
+        linkUsed: false,
+      },
+      { id: user.id },
+    );
+
+    // Send email with reset link
+    await this.emailService.sendPasswordResetEmail(
+      `${user.firstName} ${user.lastName}`,
+      user.email,
+      resetUrl,
+    );
+
+    return {
+      message:
+        'A password reset link has been sent to your registered email address. Please check your inbox and follow the instructions provided to reset your password.',
+    };
   }
 
   async updateWalkthroughScreens(
